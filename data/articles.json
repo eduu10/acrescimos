@@ -1,0 +1,58 @@
+[
+  {
+    "id": "1",
+    "title": "Final eletrizante: Virada histórica nos acréscimos garante o título",
+    "slug": "final-eletrizante-virada-historica",
+    "content": "Em jogo de tirar o fôlego, equipe da casa busca o resultado impossível e levanta a taça diante de 50 mil torcedores. O gol decisivo saiu aos 47 minutos do segundo tempo, em uma jogada que ficará marcada na história do campeonato.\n\nO técnico, visivelmente emocionado, declarou que este foi o momento mais importante de sua carreira. Os jogadores celebraram com a torcida em uma festa que durou horas após o apito final.",
+    "image": "/uploads/default-hero.jpg",
+    "category": "Brasileirão",
+    "author": "Redação Acréscimos",
+    "published": true,
+    "featured": true,
+    "clicks": 1250,
+    "createdAt": "2026-02-28T10:00:00.000Z",
+    "updatedAt": "2026-02-28T10:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "title": "Atacante da seleção é sondado por gigantes europeus",
+    "slug": "atacante-selecao-sondado-gigantes-europeus",
+    "content": "O jovem atacante que brilhou nas últimas rodadas do Brasileirão entrou no radar de clubes como Real Madrid e Manchester City. Segundo fontes próximas à negociação, uma proposta formal pode chegar nas próximas semanas.",
+    "image": "/uploads/default-transfer.jpg",
+    "category": "Mercado da Bola",
+    "author": "Redação Acréscimos",
+    "published": true,
+    "featured": false,
+    "clicks": 890,
+    "createdAt": "2026-02-28T09:00:00.000Z",
+    "updatedAt": "2026-02-28T09:00:00.000Z"
+  },
+  {
+    "id": "3",
+    "title": "Análise: O que esperar da próxima rodada decisiva",
+    "slug": "analise-proxima-rodada-decisiva",
+    "content": "Com a reta final do campeonato se aproximando, cada ponto vale ouro. Analisamos os confrontos mais importantes da próxima rodada e o que cada equipe precisa fazer para alcançar seus objetivos.",
+    "image": "/uploads/default-analysis.jpg",
+    "category": "Brasileirão",
+    "author": "Colunista 1",
+    "published": true,
+    "featured": false,
+    "clicks": 456,
+    "createdAt": "2026-02-28T08:00:00.000Z",
+    "updatedAt": "2026-02-28T08:00:00.000Z"
+  },
+  {
+    "id": "4",
+    "title": "Lakers vencem mais uma com show de LeBron",
+    "slug": "lakers-vencem-show-lebron",
+    "content": "LeBron James teve mais uma noite inspirada e comandou a vitória dos Lakers. Com 35 pontos, 8 rebotes e 11 assistências, o astro mostrou que segue em altíssimo nível.",
+    "image": "/uploads/default-nba.jpg",
+    "category": "Basquete",
+    "author": "Redação Acréscimos",
+    "published": true,
+    "featured": false,
+    "clicks": 320,
+    "createdAt": "2026-02-28T07:00:00.000Z",
+    "updatedAt": "2026-02-28T07:00:00.000Z"
+  }
+]
