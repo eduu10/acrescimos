@@ -1,4 +1,4 @@
-import { getArticles, getArticleBySlug } from '@/lib/db';
+import { getArticleBySlug } from '@/lib/db';
 import { Header } from '@/components/header';
 import { notFound } from 'next/navigation';
 import { Clock, User, ArrowLeft } from 'lucide-react';
