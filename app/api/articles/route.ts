@@ -7,13 +7,13 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category');
   const featured = searchParams.get('featured');
 
-  let articles = getArticles();
+  const filters: { published?: boolean; category?: string; featured?: boolean } = {};
+  if (published === 'true') filters.published = true;
+  if (published === 'false') filters.published = false;
+  if (category) filters.category = category;
+  if (featured === 'true') filters.featured = true;
 
-  if (published === 'true') articles = articles.filter(a => a.published);
-  if (published === 'false') articles = articles.filter(a => !a.published);
-  if (category) articles = articles.filter(a => a.category.toLowerCase() === category.toLowerCase());
-  if (featured === 'true') articles = articles.filter(a => a.featured);
-
+  const articles = await getArticles(Object.keys(filters).length > 0 ? filters : undefined);
   return NextResponse.json(articles);
 }
 
@@ -28,18 +28,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Título e conteúdo são obrigatórios' }, { status: 400 });
   }
 
-  const slug = title
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
-  const article = createArticle({
-    title,
-    slug,
-    content,
-    image: image || '/uploads/default.jpg',
+  const article = await createArticle({
+    title, slug, content,
+    image: image || '',
     category: category || 'Geral',
     author: author || 'Redação Acréscimos',
     published: published ?? true,

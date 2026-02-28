@@ -97,7 +97,7 @@ export function ExternalNewsFeed() {
         </div>
       ) : news.length === 0 ? (
         <p className="text-gray-400 text-sm text-center py-8">
-          Nenhuma notícia encontrada. Configure a NEXT_PUBLIC_NEWS_API_KEY.
+          Nenhuma notícia encontrada. Configure a GNEWS_API_KEY.
         </p>
       ) : (
         <>

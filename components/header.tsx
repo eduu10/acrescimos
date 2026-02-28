@@ -34,9 +34,8 @@ export function Header() {
           {/* Center: Quick Links (Desktop) */}
           <nav className="hidden lg:flex items-center gap-8 font-bold text-sm uppercase tracking-wider font-oswald">
             <Link href="/" className="hover:text-[#F2E205] transition-colors">Início</Link>
-            <Link href="/standings" className="hover:text-[#F2E205] transition-colors">Classificação</Link>
-            <Link href="#" className="hover:text-[#F2E205] transition-colors">Libertadores</Link>
-            <Link href="#" className="hover:text-[#F2E205] transition-colors">Copa do Brasil</Link>
+            <Link href="/placar" className="hover:text-[#F2E205] transition-colors">Placar</Link>
+            <Link href="/classificacao" className="hover:text-[#F2E205] transition-colors">Classificação</Link>
           </nav>
 
           {/* Right: Weather, Search, Theme & Account */}

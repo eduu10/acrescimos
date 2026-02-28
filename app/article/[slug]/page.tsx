@@ -4,19 +4,32 @@ import { notFound } from 'next/navigation';
 import { Clock, User, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { ArticleTracker } from './tracker';
+import type { Metadata } from 'next';
 
-export async function generateStaticParams() {
-  const articles = getArticles();
-  return articles.map(a => ({ slug: a.slug }));
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
+  if (!article) return { title: 'Artigo não encontrado - Acréscimos' };
+  return {
+    title: `${article.title} - Acréscimos`,
+    description: article.content.slice(0, 160),
+    openGraph: {
+      title: article.title,
+      description: article.content.slice(0, 160),
+      type: 'article',
+      publishedTime: article.created_at,
+      authors: [article.author],
+    },
+  };
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await getArticleBySlug(slug);
 
-  if (!article || !article.published) {
-    notFound();
-  }
+  if (!article || !article.published) notFound();
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
@@ -39,17 +52,11 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </h1>
 
           <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
-            <span className="flex items-center gap-1">
-              <User className="w-4 h-4" />
-              {article.author}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              {new Date(article.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
-            </span>
+            <span className="flex items-center gap-1"><User className="w-4 h-4" />{article.author}</span>
+            <span className="flex items-center gap-1"><Clock className="w-4 h-4" />{new Date(article.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
           </div>
 
-          {article.image && article.image !== '/uploads/default.jpg' && (
+          {article.image && (
             <div className="relative aspect-video rounded-xl overflow-hidden mb-8 bg-gray-200">
               <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
             </div>
@@ -64,9 +71,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       </main>
 
       <footer className="bg-[#1B2436] text-white py-6 border-t-4 border-[#F2E205]">
-        <div className="container mx-auto px-4 text-center text-xs text-gray-500">
-          &copy; 2026 Acréscimos. Todos os direitos reservados.
-        </div>
+        <div className="container mx-auto px-4 text-center text-xs text-gray-500">&copy; 2026 Acréscimos. Todos os direitos reservados.</div>
       </footer>
     </div>
   );

@@ -8,3 +8,5 @@ coverage/
 env.cpanel
 public/uploads/*
 !public/uploads/.gitkeep
+
+.vercel

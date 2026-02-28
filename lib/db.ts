@@ -1,10 +1,13 @@
-import fs from 'fs';
-import path from 'path';
+import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+let _sql: NeonQueryFunction<false, false>;
+function sql() {
+  if (!_sql) _sql = neon(process.env.DATABASE_URL!);
+  return _sql;
+}
 
 export interface Article {
-  id: string;
+  id: number;
   title: string;
   slug: string;
   content: string;
@@ -14,112 +17,114 @@ export interface Article {
   published: boolean;
   featured: boolean;
   clicks: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AnalyticsData {
-  pageViews: { date: string; count: number }[];
-  articleClicks: { articleId: string; date: string; count: number }[];
-}
-
-function readJSON<T>(filename: string): T {
-  const filePath = path.join(DATA_DIR, filename);
-  const data = fs.readFileSync(filePath, 'utf-8');
-  return JSON.parse(data);
-}
-
-function writeJSON<T>(filename: string, data: T): void {
-  const filePath = path.join(DATA_DIR, filename);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  created_at: string;
+  updated_at: string;
 }
 
 // Articles
-export function getArticles(): Article[] {
-  return readJSON<Article[]>('articles.json');
+export async function getArticles(filters?: { published?: boolean; category?: string; featured?: boolean }): Promise<Article[]> {
+  const q = sql();
+  if (filters?.published !== undefined && filters?.category) {
+    return await q`SELECT * FROM articles WHERE published = ${filters.published} AND LOWER(category) = LOWER(${filters.category}) ORDER BY created_at DESC` as Article[];
+  } else if (filters?.published !== undefined) {
+    return await q`SELECT * FROM articles WHERE published = ${filters.published} ORDER BY created_at DESC` as Article[];
+  } else if (filters?.featured) {
+    return await q`SELECT * FROM articles WHERE featured = true AND published = true ORDER BY created_at DESC` as Article[];
+  }
+  return await q`SELECT * FROM articles ORDER BY created_at DESC` as Article[];
 }
 
-export function getArticleById(id: string): Article | undefined {
-  const articles = getArticles();
-  return articles.find(a => a.id === id);
+export async function getArticleById(id: number): Promise<Article | null> {
+  const rows = await sql()`SELECT * FROM articles WHERE id = ${id}` as Article[];
+  return rows[0] || null;
 }
 
-export function getArticleBySlug(slug: string): Article | undefined {
-  const articles = getArticles();
-  return articles.find(a => a.slug === slug);
+export async function getArticleBySlug(slug: string): Promise<Article | null> {
+  const rows = await sql()`SELECT * FROM articles WHERE slug = ${slug}` as Article[];
+  return rows[0] || null;
 }
 
-export function createArticle(article: Omit<Article, 'id' | 'clicks' | 'createdAt' | 'updatedAt'>): Article {
-  const articles = getArticles();
-  const newArticle: Article = {
-    ...article,
-    id: Date.now().toString(),
-    clicks: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  articles.unshift(newArticle);
-  writeJSON('articles.json', articles);
-  return newArticle;
+export async function createArticle(data: { title: string; slug: string; content: string; image: string; category: string; author: string; published: boolean; featured: boolean }): Promise<Article> {
+  const rows = await sql()`INSERT INTO articles (title, slug, content, image, category, author, published, featured) VALUES (${data.title}, ${data.slug}, ${data.content}, ${data.image}, ${data.category}, ${data.author}, ${data.published}, ${data.featured}) RETURNING *` as Article[];
+  return rows[0];
 }
 
-export function updateArticle(id: string, updates: Partial<Article>): Article | null {
-  const articles = getArticles();
-  const index = articles.findIndex(a => a.id === id);
-  if (index === -1) return null;
-  articles[index] = { ...articles[index], ...updates, updatedAt: new Date().toISOString() };
-  writeJSON('articles.json', articles);
-  return articles[index];
+export async function updateArticle(id: number, data: Partial<Article>): Promise<Article | null> {
+  const current = await getArticleById(id);
+  if (!current) return null;
+
+  const title = data.title ?? current.title;
+  const slug = data.slug ?? current.slug;
+  const content = data.content ?? current.content;
+  const image = data.image ?? current.image;
+  const category = data.category ?? current.category;
+  const author = data.author ?? current.author;
+  const published = data.published ?? current.published;
+  const featured = data.featured ?? current.featured;
+
+  const rows = await sql()`UPDATE articles SET title=${title}, slug=${slug}, content=${content}, image=${image}, category=${category}, author=${author}, published=${published}, featured=${featured}, updated_at=NOW() WHERE id=${id} RETURNING *` as Article[];
+  return rows[0] || null;
 }
 
-export function deleteArticle(id: string): boolean {
-  const articles = getArticles();
-  const filtered = articles.filter(a => a.id !== id);
-  if (filtered.length === articles.length) return false;
-  writeJSON('articles.json', filtered);
-  return true;
+export async function deleteArticle(id: number): Promise<boolean> {
+  const rows = await sql()`DELETE FROM articles WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
 }
 
 // Analytics
-export function getAnalytics(): AnalyticsData {
-  return readJSON<AnalyticsData>('analytics.json');
+export async function trackPageView(): Promise<void> {
+  try {
+    await sql()`INSERT INTO analytics (type, date, count) VALUES ('pageview', CURRENT_DATE, 1) ON CONFLICT (type, article_id, date) DO UPDATE SET count = analytics.count + 1 WHERE analytics.type = 'pageview' AND analytics.date = CURRENT_DATE`;
+  } catch {
+    try { await sql()`INSERT INTO analytics (type, date, count) VALUES ('pageview', CURRENT_DATE, 1)`; } catch {}
+  }
 }
 
-export function trackPageView(): void {
-  const analytics = getAnalytics();
-  const today = new Date().toISOString().split('T')[0];
-  const existing = analytics.pageViews.find(v => v.date === today);
-  if (existing) {
-    existing.count++;
-  } else {
-    analytics.pageViews.push({ date: today, count: 1 });
-  }
-  // Keep last 30 days
-  analytics.pageViews = analytics.pageViews.slice(-30);
-  writeJSON('analytics.json', analytics);
+export async function trackArticleClick(articleId: number): Promise<void> {
+  await sql()`UPDATE articles SET clicks = clicks + 1 WHERE id = ${articleId}`;
+  try { await sql()`INSERT INTO analytics (type, article_id, date, count) VALUES ('click', ${articleId}, CURRENT_DATE, 1)`; } catch {}
 }
 
-export function trackArticleClick(articleId: string): void {
-  const analytics = getAnalytics();
-  const today = new Date().toISOString().split('T')[0];
-  const existing = analytics.articleClicks.find(c => c.articleId === articleId && c.date === today);
-  if (existing) {
-    existing.count++;
-  } else {
-    analytics.articleClicks.push({ articleId, date: today, count: 1 });
-  }
-  // Keep last 30 days
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const cutoff = thirtyDaysAgo.toISOString().split('T')[0];
-  analytics.articleClicks = analytics.articleClicks.filter(c => c.date >= cutoff);
-  writeJSON('analytics.json', analytics);
+export async function getAnalyticsData() {
+  const q = sql();
+  const articles = await q`SELECT * FROM articles ORDER BY clicks DESC LIMIT 10` as Article[];
+  const todayViews = await q`SELECT COALESCE(SUM(count), 0) as total FROM analytics WHERE type = 'pageview' AND date = CURRENT_DATE`;
+  const todayClicks = await q`SELECT COALESCE(SUM(count), 0) as total FROM analytics WHERE type = 'click' AND date = CURRENT_DATE`;
+  const viewsLast7 = await q`SELECT date::text, COALESCE(SUM(count), 0) as count FROM analytics WHERE type = 'pageview' AND date >= CURRENT_DATE - INTERVAL '7 days' GROUP BY date ORDER BY date`;
+  const clicksLast7 = await q`SELECT date::text, COALESCE(SUM(count), 0) as count FROM analytics WHERE type = 'click' AND date >= CURRENT_DATE - INTERVAL '7 days' GROUP BY date ORDER BY date`;
+  const totalArticles = await q`SELECT count(*) as total FROM articles`;
+  const publishedArticles = await q`SELECT count(*) as total FROM articles WHERE published = true`;
 
-  // Also increment article click count
-  const articles = getArticles();
-  const article = articles.find(a => a.id === articleId);
-  if (article) {
-    article.clicks++;
-    writeJSON('articles.json', articles);
-  }
+  return {
+    topArticles: articles.map(a => ({ id: a.id, title: a.title, clicks: a.clicks, category: a.category })),
+    todayViews: Number(todayViews[0]?.total || 0),
+    todayClicks: Number(todayClicks[0]?.total || 0),
+    totalArticles: Number(totalArticles[0]?.total || 0),
+    publishedArticles: Number(publishedArticles[0]?.total || 0),
+    viewsLast7Days: viewsLast7.map(r => ({ date: r.date, count: Number(r.count) })),
+    clicksLast7Days: clicksLast7.map(r => ({ date: r.date, count: Number(r.count) })),
+  };
+}
+
+// Admin
+export async function verifyAdmin(username: string, password: string): Promise<boolean> {
+  const rows = await sql()`SELECT * FROM admin_users WHERE username = ${username} AND password = ${password}`;
+  return rows.length > 0;
+}
+
+// Settings
+export async function getSetting(key: string): Promise<string | null> {
+  const rows = await sql()`SELECT value FROM site_settings WHERE key = ${key}`;
+  return rows[0]?.value || null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  await sql()`INSERT INTO site_settings (key, value) VALUES (${key}, ${value}) ON CONFLICT (key) DO UPDATE SET value = ${value}`;
+}
+
+export async function getAllSettings(): Promise<Record<string, string>> {
+  const rows = await sql()`SELECT key, value FROM site_settings`;
+  const settings: Record<string, string> = {};
+  for (const row of rows) settings[row.key] = row.value;
+  return settings;
 }

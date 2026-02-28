@@ -78,7 +78,7 @@ export default function Home() {
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
                 <h3 className="font-oswald font-bold text-[#1B2436] dark:text-white uppercase mb-3 text-sm">Links Rápidos</h3>
                 <div className="flex flex-col gap-2">
-                  <Link href="/standings" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#F2E205] transition-colors">Tabela de Classificação</Link>
+                  <Link href="/classificacao" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#F2E205] transition-colors">Tabela de Classificação</Link>
                   <Link href="/admin" className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#F2E205] transition-colors">Painel Admin</Link>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export default function Home() {
             <div>
               <h4 className="font-bold uppercase mb-4 text-[#F2E205]">Futebol</h4>
               <ul className="space-y-2 text-sm text-gray-300">
-                <li><Link href="/standings" className="hover:text-white">Brasileirão</Link></li>
+                <li><Link href="/classificacao" className="hover:text-white">Brasileirão</Link></li>
                 <li><a href="#" className="hover:text-white">Libertadores</a></li>
                 <li><a href="#" className="hover:text-white">Copa do Brasil</a></li>
                 <li><a href="#" className="hover:text-white">Seleção Brasileira</a></li>

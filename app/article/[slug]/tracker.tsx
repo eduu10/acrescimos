@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-export function ArticleTracker({ articleId }: { articleId: string }) {
+export function ArticleTracker({ articleId }: { articleId: number }) {
   useEffect(() => {
     // Track page view
     fetch('/api/analytics', {
