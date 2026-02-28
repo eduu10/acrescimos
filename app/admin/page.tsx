@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileText, Eye, MousePointerClick, TrendingUp } from 'lucide-react';
+import { FileText, Eye, MousePointerClick, TrendingUp, Download, Save, SkipForward } from 'lucide-react';
 
 interface DashboardData {
   topArticles: { id: string; title: string; clicks: number; category: string }[];
@@ -13,8 +13,22 @@ interface DashboardData {
   clicksLast7Days: { date: string; count: number }[];
 }
 
+interface ScrapePreview {
+  original: { title: string; content: string; image: string; url: string };
+  rewritten: { title: string; content: string; image: string; category: string };
+  articlesFound: number;
+  alreadyScraped: number;
+}
+
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
+
+  // Scrape state
+  const [scraping, setScraping] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [scrapeError, setScrapeError] = useState('');
+  const [scrapeSuccess, setScrapeSuccess] = useState('');
+  const [preview, setPreview] = useState<ScrapePreview | null>(null);
 
   useEffect(() => {
     fetch('/api/analytics')
@@ -22,6 +36,79 @@ export default function AdminDashboard() {
       .then(setData)
       .catch(() => {});
   }, []);
+
+  const handleScrape = async () => {
+    setScraping(true);
+    setScrapeError('');
+    setScrapeSuccess('');
+    setPreview(null);
+
+    try {
+      const res = await fetch('/api/scrape', { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok) {
+        setScrapeError(json.error || 'Erro ao buscar artigo');
+        return;
+      }
+      setPreview(json);
+    } catch {
+      setScrapeError('Erro de conexão');
+    } finally {
+      setScraping(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!preview) return;
+    setPublishing(true);
+    setScrapeError('');
+
+    try {
+      const res = await fetch('/api/scrape', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: preview.rewritten.title,
+          content: preview.rewritten.content,
+          image: preview.rewritten.image,
+          category: preview.rewritten.category,
+          originalUrl: preview.original.url,
+        }),
+      });
+
+      if (res.ok) {
+        setScrapeSuccess('Artigo importado com sucesso! Acesse Artigos para publicá-lo.');
+        setPreview(null);
+        fetch('/api/analytics').then(r => r.json()).then(setData).catch(() => {});
+      } else {
+        const json = await res.json();
+        setScrapeError(json.error || 'Erro ao salvar');
+      }
+    } catch {
+      setScrapeError('Erro ao salvar artigo');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    if (!preview) return;
+    await fetch('/api/scrape', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ originalUrl: preview.original.url, skip: true }),
+    }).catch(() => {});
+    setPreview(null);
+    handleScrape();
+  };
+
+  const updatePreview = (field: string, value: string) => {
+    if (!preview) return;
+    setPreview({
+      ...preview,
+      rewritten: { ...preview.rewritten, [field]: value },
+    });
+  };
 
   if (!data) {
     return (
@@ -63,7 +150,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Views Chart (Simple bar chart) */}
+        {/* Views Chart */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <h2 className="font-oswald font-bold text-[#1B2436] mb-4">Views - Últimos 7 dias</h2>
           <div className="flex items-end gap-2 h-40">
@@ -135,6 +222,120 @@ export default function AdminDashboard() {
             })
           )}
         </div>
+      </div>
+
+      {/* Import from GE Section */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-oswald font-bold text-[#1B2436] text-lg">Importar do GE</h2>
+            <p className="text-xs text-gray-400 mt-1">Busca artigos do ge.globo.com e reescreve com IA</p>
+          </div>
+          <button
+            onClick={handleScrape}
+            disabled={scraping}
+            className="flex items-center gap-2 bg-[#F2E205] text-[#1B2436] px-4 py-2 rounded-lg font-bold text-sm hover:bg-yellow-300 transition-colors disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" />
+            {scraping ? 'Buscando...' : 'Buscar Próximo Artigo'}
+          </button>
+        </div>
+
+        {scrapeError && (
+          <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-3 text-sm mb-4">
+            {scrapeError}
+          </div>
+        )}
+
+        {scrapeSuccess && (
+          <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm mb-4">
+            {scrapeSuccess}
+          </div>
+        )}
+
+        {scraping && (
+          <div className="flex items-center gap-3 py-8 justify-center">
+            <div className="animate-spin w-6 h-6 border-2 border-[#F2E205] border-t-transparent rounded-full" />
+            <span className="text-sm text-gray-500">Buscando e reescrevendo artigo com IA...</span>
+          </div>
+        )}
+
+        {preview && (
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            {/* Image preview */}
+            {preview.rewritten.image && (
+              <div className="relative h-48 bg-gray-100">
+                <img src={preview.rewritten.image} alt="" className="w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded">
+                  {preview.articlesFound} artigos encontrados / {preview.alreadyScraped} já importados
+                </div>
+              </div>
+            )}
+
+            <div className="p-4 space-y-3">
+              {/* Title */}
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Título (reescrito pela IA)</label>
+                <input
+                  value={preview.rewritten.title}
+                  onChange={e => updatePreview('title', e.target.value)}
+                  className="w-full font-bold text-lg border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Categoria</label>
+                <select
+                  value={preview.rewritten.category}
+                  onChange={e => updatePreview('category', e.target.value)}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205]"
+                >
+                  {['Brasileirão', 'Futebol Internacional', 'Copa do Brasil', 'Libertadores', 'Basquete', 'Fórmula 1', 'Tênis', 'Vôlei', 'Mercado da Bola', 'Opinião', 'Geral'].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Content */}
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Conteúdo (reescrito pela IA)</label>
+                <textarea
+                  value={preview.rewritten.content}
+                  onChange={e => updatePreview('content', e.target.value)}
+                  rows={10}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent resize-y"
+                />
+              </div>
+
+              {/* Original source */}
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-xs text-gray-400">
+                  Fonte original: <a href={preview.original.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">{preview.original.title}</a>
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  onClick={handleSkip}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <SkipForward className="w-4 h-4" />
+                  Pular
+                </button>
+                <button
+                  onClick={handlePublish}
+                  disabled={publishing}
+                  className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-600 transition-colors disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {publishing ? 'Salvando...' : 'Salvar como Rascunho'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

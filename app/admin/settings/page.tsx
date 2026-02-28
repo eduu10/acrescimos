@@ -98,10 +98,31 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* API Keys Info */}
+        {/* API Keys - Configurable */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="font-bold text-[#1B2436] mb-2">APIs Externas</h2>
-          <p className="text-xs text-gray-400 mb-4">As chaves de API são configuradas nas variáveis de ambiente da Vercel</p>
+          <h2 className="font-bold text-[#1B2436] mb-2">Chaves de API</h2>
+          <p className="text-xs text-gray-400 mb-4">Configure as chaves de API diretamente aqui. Elas são salvas no banco de dados.</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Grok / xAI <span className="text-xs text-gray-400">(Reescrita de artigos com IA)</span>
+              </label>
+              <input
+                type="password"
+                value={settings.xai_api_key || ''}
+                onChange={e => setSettings(s => ({ ...s, xai_api_key: e.target.value }))}
+                placeholder="xai-..."
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent font-mono"
+              />
+              <p className="text-xs text-gray-400 mt-1">Obtenha em <a href="https://console.x.ai" target="_blank" rel="noopener noreferrer" className="underline">console.x.ai</a></p>
+            </div>
+          </div>
+        </div>
+
+        {/* Other API Keys Info */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 className="font-bold text-[#1B2436] mb-2">APIs Externas (Vercel)</h2>
+          <p className="text-xs text-gray-400 mb-4">Estas chaves são configuradas nas variáveis de ambiente da Vercel</p>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2 border-b border-gray-50">
               <span className="text-sm text-gray-600">API-Football (Placar ao vivo)</span>

@@ -128,3 +128,18 @@ export async function getAllSettings(): Promise<Record<string, string>> {
   for (const row of rows) settings[row.key] = row.value;
   return settings;
 }
+
+// Scraped URLs tracking
+export async function getScrapedUrls(): Promise<string[]> {
+  const value = await getSetting('scraped_urls');
+  if (!value) return [];
+  try { return JSON.parse(value); } catch { return []; }
+}
+
+export async function addScrapedUrl(url: string): Promise<void> {
+  const urls = await getScrapedUrls();
+  if (!urls.includes(url)) {
+    urls.push(url);
+    await setSetting('scraped_urls', JSON.stringify(urls));
+  }
+}
