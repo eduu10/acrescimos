@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Search, X, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 
 const CATEGORIES = ['Brasileirão', 'Futebol Internacional', 'Copa do Brasil', 'Libertadores', 'Basquete', 'Fórmula 1', 'Tênis', 'Vôlei', 'Mercado da Bola', 'Opinião', 'Geral'];
@@ -12,6 +12,10 @@ export default function EditArticlePage() {
   const params = useParams();
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showImageSearch, setShowImageSearch] = useState(false);
+  const [imageQuery, setImageQuery] = useState('');
+  const [imageResults, setImageResults] = useState<{ id: number; url: string; thumb: string; alt: string }[]>([]);
+  const [searchingImages, setSearchingImages] = useState(false);
   const [form, setForm] = useState({
     title: '',
     content: '',
@@ -45,6 +49,17 @@ export default function EditArticlePage() {
         router.push('/admin/articles');
       });
   }, [params.id, router]);
+
+  const handleImageSearch = async (query?: string) => {
+    const q = query || imageQuery;
+    if (!q.trim()) return;
+    setSearchingImages(true);
+    try {
+      const res = await fetch(`/api/images?q=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      if (res.ok) setImageResults(json.images || []);
+    } catch {} finally { setSearchingImages(false); }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,13 +110,79 @@ export default function EditArticlePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">URL da Imagem</label>
-            <input
-              type="text"
-              value={form.image}
-              onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Imagem</label>
+            {/* Image preview */}
+            {form.image && (
+              <div className="relative h-40 bg-gray-100 rounded-lg overflow-hidden mb-2">
+                <img src={form.image} alt="" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, image: '' }))}
+                  className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1 rounded"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+            {!form.image && (
+              <div className="h-32 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center mb-2">
+                <ImageIcon className="w-8 h-8 text-gray-300 mb-1" />
+                <span className="text-xs text-gray-400">Sem imagem</span>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={form.image}
+                onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
+                placeholder="URL da imagem ou busque abaixo"
+              />
+              <button
+                type="button"
+                onClick={() => { setShowImageSearch(!showImageSearch); setImageQuery(form.title.split(' ').slice(0, 3).join(' ')); if (!showImageSearch) handleImageSearch(form.title.split(' ').slice(0, 3).join(' ')); }}
+                className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg text-sm transition-colors"
+              >
+                <Search className="w-4 h-4 text-gray-500" />
+                <span className="text-gray-600">Buscar</span>
+              </button>
+            </div>
+            {/* Image search panel */}
+            {showImageSearch && (
+              <div className="mt-2 border border-gray-200 rounded-lg bg-gray-50 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    value={imageQuery}
+                    onChange={e => setImageQuery(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleImageSearch())}
+                    placeholder="Ex: futebol, basquete..."
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#F2E205]"
+                  />
+                  <button type="button" onClick={() => handleImageSearch()} disabled={searchingImages} className="bg-[#F2E205] text-[#1B2436] px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-yellow-300 disabled:opacity-50">
+                    {searchingImages ? '...' : 'Buscar'}
+                  </button>
+                  <button type="button" onClick={() => { setShowImageSearch(false); setImageResults([]); }} className="p-1.5 hover:bg-gray-200 rounded">
+                    <X className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+                {searchingImages && (
+                  <div className="flex justify-center py-4">
+                    <div className="animate-spin w-5 h-5 border-2 border-[#F2E205] border-t-transparent rounded-full" />
+                  </div>
+                )}
+                {imageResults.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                    {imageResults.map(img => (
+                      <button type="button" key={img.id} onClick={() => { setForm(f => ({ ...f, image: img.url })); setShowImageSearch(false); setImageResults([]); }}
+                        className="relative aspect-video rounded overflow-hidden border-2 border-transparent hover:border-[#F2E205] transition-colors">
+                        <img src={img.thumb} alt={img.alt} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[10px] text-gray-400 mt-2">Imagens por Pexels</p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -136,13 +136,33 @@ Responda com JSON: {"title": "novo título", "content": "conteúdo reescrito com
       return NextResponse.json({ error: 'Erro na geração do conteúdo pela IA. Tente novamente.' }, { status: 500 });
     }
 
-    // 8. Return preview
+    // 8. Search for a relevant sports image via Pexels
+    let pexelsImage = '';
+    try {
+      const pexelsKey = await getSetting('pexels_api_key');
+      if (pexelsKey) {
+        const searchTerms = (rewritten.title || originalTitle).split(' ').slice(0, 4).join(' ');
+        const pexelsRes = await fetch(
+          `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchTerms + ' sports')}&per_page=1&orientation=landscape`,
+          { headers: { Authorization: pexelsKey }, signal: AbortSignal.timeout(8000) }
+        );
+        if (pexelsRes.ok) {
+          const pexelsData = await pexelsRes.json();
+          pexelsImage = pexelsData.photos?.[0]?.src?.large || '';
+        }
+      }
+    } catch {}
+
+    // Use Pexels image as primary (original), fallback to og:image
+    const finalImage = pexelsImage || ogImage;
+
+    // 9. Return preview
     return NextResponse.json({
       original: { title: originalTitle, content: originalContent, image: ogImage, url: targetUrl },
       rewritten: {
         title: rewritten.title || originalTitle,
         content: rewritten.content || originalContent,
-        image: ogImage,
+        image: finalImage,
         category: rewritten.category || 'Geral',
       },
       articlesFound: allUrls.length,

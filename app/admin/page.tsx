@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileText, Eye, MousePointerClick, TrendingUp, Download, Save, SkipForward } from 'lucide-react';
+import { FileText, Eye, MousePointerClick, TrendingUp, Download, Save, SkipForward, ImageIcon, Search, X } from 'lucide-react';
 
 interface DashboardData {
   topArticles: { id: string; title: string; clicks: number; category: string }[];
@@ -29,6 +29,12 @@ export default function AdminDashboard() {
   const [scrapeError, setScrapeError] = useState('');
   const [scrapeSuccess, setScrapeSuccess] = useState('');
   const [preview, setPreview] = useState<ScrapePreview | null>(null);
+
+  // Image search state
+  const [showImageSearch, setShowImageSearch] = useState(false);
+  const [imageQuery, setImageQuery] = useState('');
+  const [imageResults, setImageResults] = useState<{ id: number; url: string; thumb: string; small: string; alt: string; photographer: string }[]>([]);
+  const [searchingImages, setSearchingImages] = useState(false);
 
   useEffect(() => {
     fetch('/api/analytics')
@@ -108,6 +114,27 @@ export default function AdminDashboard() {
       ...preview,
       rewritten: { ...preview.rewritten, [field]: value },
     });
+  };
+
+  const handleImageSearch = async (query?: string) => {
+    const q = query || imageQuery;
+    if (!q.trim()) return;
+    setSearchingImages(true);
+    try {
+      const res = await fetch(`/api/images?q=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      if (res.ok) {
+        setImageResults(json.images || []);
+      }
+    } catch {} finally {
+      setSearchingImages(false);
+    }
+  };
+
+  const selectImage = (url: string) => {
+    updatePreview('image', url);
+    setShowImageSearch(false);
+    setImageResults([]);
   };
 
   if (!data) {
@@ -262,13 +289,90 @@ export default function AdminDashboard() {
 
         {preview && (
           <div className="border border-gray-200 rounded-lg overflow-hidden">
-            {/* Image preview */}
-            {preview.rewritten.image && (
-              <div className="relative h-48 bg-gray-100">
+            {/* Image preview with edit controls */}
+            <div className="relative h-48 bg-gray-100">
+              {preview.rewritten.image ? (
                 <img src={preview.rewritten.image} alt="" className="w-full h-full object-cover" />
-                <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded">
-                  {preview.articlesFound} artigos encontrados / {preview.alreadyScraped} já importados
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <ImageIcon className="w-12 h-12" />
                 </div>
+              )}
+              <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded">
+                {preview.articlesFound} artigos encontrados / {preview.alreadyScraped} já importados
+              </div>
+              <div className="absolute bottom-2 left-2 flex gap-1">
+                <button
+                  onClick={() => { setShowImageSearch(!showImageSearch); setImageQuery(preview.rewritten.title.split(' ').slice(0, 3).join(' ')); if (!showImageSearch) handleImageSearch(preview.rewritten.title.split(' ').slice(0, 3).join(' ')); }}
+                  className="flex items-center gap-1 bg-black/70 hover:bg-black/90 text-white text-xs px-3 py-1.5 rounded transition-colors"
+                >
+                  <Search className="w-3 h-3" />
+                  Buscar Imagem
+                </button>
+              </div>
+            </div>
+
+            {/* Image search panel */}
+            {showImageSearch && (
+              <div className="border-b border-gray-200 bg-gray-50 p-3">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex-1 flex gap-2">
+                    <input
+                      value={imageQuery}
+                      onChange={e => setImageQuery(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleImageSearch()}
+                      placeholder="Ex: futebol, basquete, fórmula 1..."
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
+                    />
+                    <button
+                      onClick={() => handleImageSearch()}
+                      disabled={searchingImages}
+                      className="flex items-center gap-1 bg-[#F2E205] text-[#1B2436] px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-yellow-300 disabled:opacity-50"
+                    >
+                      <Search className="w-3.5 h-3.5" />
+                      {searchingImages ? '...' : 'Buscar'}
+                    </button>
+                  </div>
+                  <button onClick={() => { setShowImageSearch(false); setImageResults([]); }} className="p-1.5 hover:bg-gray-200 rounded-lg">
+                    <X className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+
+                {/* URL manual input */}
+                <div className="flex gap-2 mb-3">
+                  <input
+                    placeholder="Ou cole uma URL de imagem..."
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
+                    onKeyDown={e => { if (e.key === 'Enter') { updatePreview('image', (e.target as HTMLInputElement).value); setShowImageSearch(false); } }}
+                  />
+                </div>
+
+                {searchingImages && (
+                  <div className="flex items-center justify-center py-6">
+                    <div className="animate-spin w-5 h-5 border-2 border-[#F2E205] border-t-transparent rounded-full" />
+                  </div>
+                )}
+
+                {imageResults.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                    {imageResults.map(img => (
+                      <button
+                        key={img.id}
+                        onClick={() => selectImage(img.url)}
+                        className="relative aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-[#F2E205] transition-colors group"
+                      >
+                        <img src={img.thumb} alt={img.alt} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {!searchingImages && imageResults.length === 0 && imageQuery && (
+                  <p className="text-xs text-gray-400 text-center py-3">Nenhuma imagem encontrada. Tente outro termo.</p>
+                )}
+
+                <p className="text-[10px] text-gray-400 mt-2">Imagens por Pexels (gratuitas para uso)</p>
               </div>
             )}
 
