@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, Eye, EyeOff, Star, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, Star, Search, ImageIcon } from 'lucide-react';
 
 interface Article {
   id: string;
   title: string;
   slug: string;
+  image: string;
   category: string;
   author: string;
   published: boolean;
@@ -106,8 +107,21 @@ export default function ArticlesPage() {
                 {filtered.map(article => (
                   <tr key={article.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900 line-clamp-1">{article.title}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">{article.author} - {new Date(article.createdAt).toLocaleDateString('pt-BR')}</div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-16 h-10 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                          {article.image ? (
+                            <img src={article.image} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ImageIcon className="w-4 h-4 text-gray-300" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-medium text-gray-900 line-clamp-1">{article.title}</div>
+                          <div className="text-xs text-gray-400 mt-0.5">{article.author} - {new Date(article.createdAt).toLocaleDateString('pt-BR')}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">{article.category}</span>
