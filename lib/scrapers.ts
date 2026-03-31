@@ -1,0 +1,190 @@
+export interface ScrapedArticle {
+  title: string
+  content: string
+  image: string
+  url: string
+  source: string
+}
+
+const BROWSER_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+}
+
+function extractOgMeta(html: string, property: string): string {
+  const pattern = new RegExp(
+    `<meta\\s+(?:property|name)="${property}"\\s+content="([^"]+)"` +
+      `|content="([^"]+)"\\s+(?:property|name)="${property}"`,
+    'i'
+  )
+  const match = html.match(pattern)
+  return decodeHtmlEntities(match?.[1] || match?.[2] || '')
+}
+
+function extractParagraphs(html: string, selector?: string): string {
+  let pattern: RegExp
+  if (selector) {
+    pattern = new RegExp(`<p[^>]*class="[^"]*${selector}[^"]*"[^>]*>(.*?)</p>`, 'gs')
+  } else {
+    pattern = /<p[^>]*>(.*?)<\/p>/gs
+  }
+
+  const matches = [...html.matchAll(pattern)]
+  return matches
+    .map((m) => m[1].replace(/<[^>]+>/g, '').trim())
+    .filter((t) => t.length > 50)
+    .slice(0, 15)
+    .join('\n\n')
+}
+
+// ── GE Globo ───────────────────────────────────────────────────────────────
+
+export async function scrapeGE(): Promise<string[]> {
+  const res = await fetch('https://ge.globo.com/', {
+    headers: BROWSER_HEADERS,
+    signal: AbortSignal.timeout(15000),
+  })
+  if (!res.ok) return []
+  const html = await res.text()
+  const urlPattern = /href="(https:\/\/ge\.globo\.com\/[^"]*\/noticia\/[^"]*\.ghtml)"/g
+  const urls: string[] = []
+  let match
+  while ((match = urlPattern.exec(html)) !== null) {
+    const url = match[1].split('#')[0].split('?')[0]
+    if (!urls.includes(url)) urls.push(url)
+  }
+  return urls
+}
+
+// ── ESPN Brasil ────────────────────────────────────────────────────────────
+
+export async function scrapeESPN(): Promise<string[]> {
+  const res = await fetch('https://www.espn.com.br/', {
+    headers: BROWSER_HEADERS,
+    signal: AbortSignal.timeout(15000),
+  })
+  if (!res.ok) return []
+  const html = await res.text()
+  const urlPattern = /href="(https:\/\/www\.espn\.com\.br\/[^"]*(?:artigo|noticia|story)[^"]*)"/g
+  const urls: string[] = []
+  let match
+  while ((match = urlPattern.exec(html)) !== null) {
+    const url = match[1].split('#')[0].split('?')[0]
+    if (!urls.includes(url)) urls.push(url)
+  }
+  // Fallback: try generic article links
+  if (urls.length === 0) {
+    const genericPattern = /href="(https:\/\/www\.espn\.com\.br\/[^"]*\/[^"]*_\/id\/[^"]*)"/g
+    while ((match = genericPattern.exec(html)) !== null) {
+      const url = match[1].split('#')[0].split('?')[0]
+      if (!urls.includes(url)) urls.push(url)
+    }
+  }
+  return urls
+}
+
+// ── UOL Esporte ────────────────────────────────────────────────────────────
+
+export async function scrapeUOL(): Promise<string[]> {
+  const res = await fetch('https://www.uol.com.br/esporte/futebol/', {
+    headers: BROWSER_HEADERS,
+    signal: AbortSignal.timeout(15000),
+  })
+  if (!res.ok) return []
+  const html = await res.text()
+  const urlPattern = /href="(https:\/\/www\.uol\.com\.br\/esporte\/[^"]*\/(?:ultimas-noticias|noticias)\/[^"]*\.htm)"/g
+  const urls: string[] = []
+  let match
+  while ((match = urlPattern.exec(html)) !== null) {
+    const url = match[1].split('#')[0].split('?')[0]
+    if (!urls.includes(url)) urls.push(url)
+  }
+  return urls
+}
+
+// ── Extract article content from any source ────────────────────────────────
+
+export async function extractArticleContent(url: string): Promise<ScrapedArticle | null> {
+  try {
+    const res = await fetch(url, {
+      headers: BROWSER_HEADERS,
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!res.ok) return null
+    const html = await res.text()
+
+    const title = extractOgMeta(html, 'og:title')
+      || html.match(/<h1[^>]*>(.*?)<\/h1>/s)?.[1]?.replace(/<[^>]+>/g, '').trim()
+      || ''
+
+    const image = extractOgMeta(html, 'og:image')
+
+    // Try source-specific content selectors, then generic fallback
+    let content = ''
+    if (url.includes('ge.globo.com')) {
+      content = extractParagraphs(html, 'content-text')
+    } else if (url.includes('espn.com.br')) {
+      content = extractParagraphs(html, 'article-body')
+    } else if (url.includes('uol.com.br')) {
+      content = extractParagraphs(html, 'text')
+    }
+
+    if (!content) {
+      content = extractParagraphs(html)
+    }
+
+    if (!title || !content) return null
+
+    const source = url.includes('ge.globo.com')
+      ? 'ge'
+      : url.includes('espn.com.br')
+        ? 'espn'
+        : url.includes('uol.com.br')
+          ? 'uol'
+          : 'unknown'
+
+    return { title: decodeHtmlEntities(title), content, image, url, source }
+  } catch {
+    return null
+  }
+}
+
+// ── Discover all URLs from all sources ─────────────────────────────────────
+
+export async function discoverArticleUrls(
+  source: 'ge' | 'espn' | 'uol' | 'all' = 'all'
+): Promise<string[]> {
+  const scrapers: Record<string, () => Promise<string[]>> = {
+    ge: scrapeGE,
+    espn: scrapeESPN,
+    uol: scrapeUOL,
+  }
+
+  if (source !== 'all') {
+    const fn = scrapers[source]
+    return fn ? fn() : []
+  }
+
+  const results = await Promise.allSettled([scrapeGE(), scrapeESPN(), scrapeUOL()])
+  const urls: string[] = []
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      for (const url of result.value) {
+        if (!urls.includes(url)) urls.push(url)
+      }
+    }
+  }
+  return urls
+}

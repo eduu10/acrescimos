@@ -1,0 +1,57 @@
+name: "Acrescimos PRD - Fase 2"
+code: acrescimos-fase2
+description: "Squad de desenvolvimento para implementar a Fase 2 do PRD: Conteudo e Automacao"
+version: "1.0.0"
+skills:
+  - web_search
+  - web_fetch
+
+pipeline:
+  steps:
+    - id: checkpoint-prioridades
+      file: checkpoint-prioridades
+      type: checkpoint
+
+    - id: impl-scraping-sources
+      file: impl-scraping-sources
+      agent: scraping-engineer
+      execution: inline
+
+    - id: impl-auto-scraping
+      file: impl-auto-scraping
+      agent: scraping-engineer
+      execution: inline
+
+    - id: impl-ai-content
+      file: impl-ai-content
+      agent: scraping-engineer
+      execution: inline
+
+    - id: impl-category-pages
+      file: impl-category-pages
+      agent: frontend-engineer
+      execution: inline
+
+    - id: impl-tags-system
+      file: impl-tags-system
+      agent: frontend-engineer
+      execution: inline
+
+    - id: impl-search
+      file: impl-search
+      agent: frontend-engineer
+      execution: inline
+
+    - id: impl-rich-editor
+      file: impl-rich-editor
+      agent: frontend-engineer
+      execution: inline
+
+    - id: impl-rss
+      file: impl-rss
+      agent: frontend-engineer
+      execution: inline
+
+    - id: checkpoint-revisao
+      file: checkpoint-revisao
+      type: checkpoint

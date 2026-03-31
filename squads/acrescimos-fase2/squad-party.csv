@@ -1,0 +1,3 @@
+id,displayName,icon,role,path
+scraping-engineer,Scraping Engineer,🕷️,Especialista em web scraping e automacao de conteudo com IA,./agents/scraping-engineer.agent.md
+frontend-engineer,Frontend Engineer,⚛️,Especialista em Next.js App Router e UI com React/Tailwind,./agents/frontend-engineer.agent.md

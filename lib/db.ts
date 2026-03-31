@@ -151,6 +151,74 @@ export async function getAllSettings(): Promise<Record<string, string>> {
   return settings;
 }
 
+// Paginated queries
+export async function getArticlesByCategory(
+  category: string,
+  page: number = 1,
+  limit: number = 12
+): Promise<{ articles: Article[]; total: number }> {
+  const offset = (page - 1) * limit;
+  const q = sql();
+  const articles = await q`SELECT * FROM articles WHERE published = true AND LOWER(category) = LOWER(${category}) ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}` as Article[];
+  const countResult = await q`SELECT COUNT(*) as total FROM articles WHERE published = true AND LOWER(category) = LOWER(${category})`;
+  return { articles, total: Number(countResult[0]?.total || 0) };
+}
+
+export async function searchArticles(
+  query: string,
+  page: number = 1,
+  limit: number = 12
+): Promise<{ articles: Article[]; total: number }> {
+  const offset = (page - 1) * limit;
+  const q = sql();
+  const searchQuery = `%${query}%`;
+  const articles = await q`SELECT * FROM articles WHERE published = true AND (title ILIKE ${searchQuery} OR content ILIKE ${searchQuery}) ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}` as Article[];
+  const countResult = await q`SELECT COUNT(*) as total FROM articles WHERE published = true AND (title ILIKE ${searchQuery} OR content ILIKE ${searchQuery})`;
+  return { articles, total: Number(countResult[0]?.total || 0) };
+}
+
+// Tags
+export interface Tag {
+  id: number
+  name: string
+  slug: string
+  created_at: string
+}
+
+export async function getTags(): Promise<Tag[]> {
+  return await sql()`SELECT * FROM tags ORDER BY name` as Tag[];
+}
+
+export async function getTagBySlug(slug: string): Promise<Tag | null> {
+  const rows = await sql()`SELECT * FROM tags WHERE slug = ${slug}` as Tag[];
+  return rows[0] || null;
+}
+
+export async function createTag(name: string): Promise<Tag> {
+  const slug = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const rows = await sql()`INSERT INTO tags (name, slug) VALUES (${name}, ${slug}) RETURNING *` as Tag[];
+  return rows[0];
+}
+
+export async function getArticleTags(articleId: number): Promise<Tag[]> {
+  return await sql()`SELECT t.* FROM tags t JOIN article_tags at ON t.id = at.tag_id WHERE at.article_id = ${articleId} ORDER BY t.name` as Tag[];
+}
+
+export async function setArticleTags(articleId: number, tagIds: number[]): Promise<void> {
+  await sql()`DELETE FROM article_tags WHERE article_id = ${articleId}`;
+  for (const tagId of tagIds) {
+    await sql()`INSERT INTO article_tags (article_id, tag_id) VALUES (${articleId}, ${tagId}) ON CONFLICT DO NOTHING`;
+  }
+}
+
+export async function getArticlesByTag(tagSlug: string, page: number = 1, limit: number = 12): Promise<{ articles: Article[]; total: number }> {
+  const offset = (page - 1) * limit;
+  const q = sql();
+  const articles = await q`SELECT a.* FROM articles a JOIN article_tags at ON a.id = at.article_id JOIN tags t ON t.id = at.tag_id WHERE t.slug = ${tagSlug} AND a.published = true ORDER BY a.created_at DESC LIMIT ${limit} OFFSET ${offset}` as Article[];
+  const countResult = await q`SELECT COUNT(*) as total FROM articles a JOIN article_tags at ON a.id = at.article_id JOIN tags t ON t.id = at.tag_id WHERE t.slug = ${tagSlug} AND a.published = true`;
+  return { articles, total: Number(countResult[0]?.total || 0) };
+}
+
 // Scraped URLs tracking
 export async function getScrapedUrls(): Promise<string[]> {
   const value = await getSetting('scraped_urls');
