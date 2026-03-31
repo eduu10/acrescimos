@@ -1,0 +1,36 @@
+name: "Acrescimos PRD - Fase 8"
+code: acrescimos-fase8
+description: "Squad de desenvolvimento para implementar a Fase 8: Cobertura ao Vivo de jogos, Geração automática de prévias e resumos de rodada, e Alertas de transferências"
+version: "1.0.0"
+skills:
+  - web_search
+  - web_fetch
+
+pipeline:
+  steps:
+    - id: checkpoint-prioridades
+      file: checkpoint-prioridades
+      type: checkpoint
+    - id: impl-live-coverage
+      file: impl-live-coverage
+      agent: live-engineer
+      execution: inline
+    - id: impl-ai-previews-auto
+      file: impl-ai-previews-auto
+      agent: content-engineer
+      execution: inline
+    - id: impl-roundup-auto
+      file: impl-roundup-auto
+      agent: content-engineer
+      execution: inline
+    - id: impl-transfer-alerts
+      file: impl-transfer-alerts
+      agent: automation-engineer
+      execution: inline
+    - id: impl-cobertura-minuto
+      file: impl-cobertura-minuto
+      agent: live-engineer
+      execution: inline
+    - id: checkpoint-revisao
+      file: checkpoint-revisao
+      type: checkpoint

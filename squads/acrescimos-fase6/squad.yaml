@@ -1,0 +1,36 @@
+name: "Acrescimos PRD - Fase 6"
+code: acrescimos-fase6
+description: "Squad de desenvolvimento para implementar a Fase 6: Engajamento, Segurança, Fontes adicionais e Ranking IA"
+version: "1.0.0"
+skills:
+  - web_search
+  - web_fetch
+
+pipeline:
+  steps:
+    - id: checkpoint-prioridades
+      file: checkpoint-prioridades
+      type: checkpoint
+    - id: impl-rate-limiting
+      file: impl-rate-limiting
+      agent: security-engineer
+      execution: inline
+    - id: impl-lance-tnt-sources
+      file: impl-lance-tnt-sources
+      agent: automation-engineer
+      execution: inline
+    - id: impl-social-auto-post
+      file: impl-social-auto-post
+      agent: growth-engineer
+      execution: inline
+    - id: impl-polls
+      file: impl-polls
+      agent: growth-engineer
+      execution: inline
+    - id: impl-power-ranking
+      file: impl-power-ranking
+      agent: content-engineer
+      execution: inline
+    - id: checkpoint-revisao
+      file: checkpoint-revisao
+      type: checkpoint

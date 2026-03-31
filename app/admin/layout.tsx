@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, FileText, BarChart3, LogOut, Menu, X, Home, Settings, MessageCircle, Sparkles } from 'lucide-react';
+import { LayoutDashboard, FileText, BarChart3, LogOut, Menu, X, Home, Settings, MessageCircle, Sparkles, ArrowRightLeft } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -43,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/articles', label: 'Artigos', icon: FileText },
     { href: '/admin/comments', label: 'Comentários', icon: MessageCircle },
     { href: '/admin/generate', label: 'Gerar com IA', icon: Sparkles },
+    { href: '/admin/transfers', label: 'Transferências', icon: ArrowRightLeft },
     { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/admin/settings', label: 'Configurações', icon: Settings },
   ];

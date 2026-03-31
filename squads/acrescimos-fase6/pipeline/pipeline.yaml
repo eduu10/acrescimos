@@ -1,0 +1,22 @@
+steps:
+  - id: checkpoint-prioridades
+    type: checkpoint
+    label: Prioridades da Fase 6
+  - id: impl-rate-limiting
+    agent: security-engineer
+    label: Rate limiting nas APIs
+  - id: impl-lance-tnt-sources
+    agent: automation-engineer
+    label: Fontes Lance! e TNT Sports
+  - id: impl-social-auto-post
+    agent: growth-engineer
+    label: Auto-post no X/Twitter
+  - id: impl-polls
+    agent: growth-engineer
+    label: Enquetes nos artigos
+  - id: impl-power-ranking
+    agent: content-engineer
+    label: Ranking semanal de times por IA
+  - id: checkpoint-revisao
+    type: checkpoint
+    label: Revisão final e deploy

@@ -389,3 +389,67 @@ export async function votePoll(pollId: number, optionId: number): Promise<Poll |
   const result = await sql()`UPDATE polls SET options = ${JSON.stringify(updated)} WHERE id = ${pollId} RETURNING *` as Poll[];
   return { ...result[0], options: updated };
 }
+
+// Live Coverage
+export interface LiveEvent {
+  id: number;
+  fixture_id: number;
+  minute: number | null;
+  event_type: string;
+  team: string | null;
+  player: string | null;
+  detail: string | null;
+  ai_comment: string | null;
+  created_at: string;
+}
+
+export async function getLiveCoverage(fixtureId: number): Promise<LiveEvent[]> {
+  return await sql()`SELECT * FROM live_coverage WHERE fixture_id = ${fixtureId} ORDER BY minute ASC NULLS FIRST, created_at ASC` as LiveEvent[];
+}
+
+export async function addLiveEvent(data: Omit<LiveEvent, 'id' | 'created_at'>): Promise<LiveEvent> {
+  const rows = await sql()`
+    INSERT INTO live_coverage (fixture_id, minute, event_type, team, player, detail, ai_comment)
+    VALUES (${data.fixture_id}, ${data.minute ?? null}, ${data.event_type}, ${data.team ?? null}, ${data.player ?? null}, ${data.detail ?? null}, ${data.ai_comment ?? null})
+    RETURNING *
+  ` as LiveEvent[];
+  return rows[0];
+}
+
+export async function clearLiveCoverage(fixtureId: number): Promise<void> {
+  await sql()`DELETE FROM live_coverage WHERE fixture_id = ${fixtureId}`;
+}
+
+// Transfer Alerts
+export interface TransferAlert {
+  id: number;
+  url: string;
+  title: string | null;
+  player: string | null;
+  from_club: string | null;
+  to_club: string | null;
+  status: 'detected' | 'published' | 'skipped';
+  article_id: number | null;
+  detected_at: string;
+}
+
+export async function getTransferAlerts(status?: string): Promise<TransferAlert[]> {
+  if (status) {
+    return await sql()`SELECT * FROM transfer_alerts WHERE status = ${status} ORDER BY detected_at DESC LIMIT 50` as TransferAlert[];
+  }
+  return await sql()`SELECT * FROM transfer_alerts ORDER BY detected_at DESC LIMIT 50` as TransferAlert[];
+}
+
+export async function upsertTransferAlert(data: Pick<TransferAlert, 'url' | 'title' | 'player' | 'from_club' | 'to_club'>): Promise<{ inserted: boolean }> {
+  const rows = await sql()`
+    INSERT INTO transfer_alerts (url, title, player, from_club, to_club)
+    VALUES (${data.url}, ${data.title ?? null}, ${data.player ?? null}, ${data.from_club ?? null}, ${data.to_club ?? null})
+    ON CONFLICT (url) DO NOTHING
+    RETURNING id
+  `;
+  return { inserted: rows.length > 0 };
+}
+
+export async function updateTransferAlertStatus(id: number, status: 'published' | 'skipped', articleId?: number): Promise<void> {
+  await sql()`UPDATE transfer_alerts SET status = ${status}, article_id = ${articleId ?? null} WHERE id = ${id}`;
+}

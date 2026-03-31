@@ -1,0 +1,22 @@
+steps:
+  - id: checkpoint-prioridades
+    type: checkpoint
+    label: Prioridades da Fase 8
+  - id: impl-live-coverage
+    agent: live-engineer
+    label: Tabela e API de cobertura ao vivo
+  - id: impl-ai-previews-auto
+    agent: content-engineer
+    label: Cron de prévias automáticas
+  - id: impl-roundup-auto
+    agent: content-engineer
+    label: Cron de resumo de rodada automático
+  - id: impl-transfer-alerts
+    agent: automation-engineer
+    label: Alertas automáticos de transferências
+  - id: impl-cobertura-minuto
+    agent: live-engineer
+    label: Página de cobertura minuto a minuto
+  - id: checkpoint-revisao
+    type: checkpoint
+    label: Revisão final e deploy

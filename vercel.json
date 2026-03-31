@@ -7,6 +7,18 @@
     {
       "path": "/api/cron/publish-scheduled",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/previews",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/roundup",
+      "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/cron/transfers",
+      "schedule": "0 */4 * * *"
     }
   ]
 }

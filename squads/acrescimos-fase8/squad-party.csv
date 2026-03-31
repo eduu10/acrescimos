@@ -1,0 +1,4 @@
+path,displayName,icon,role
+./agents/live-engineer.agent.md,Live Engineer,📡,Cobertura ao vivo e minuto a minuto
+./agents/content-engineer.agent.md,Content Engineer,✍️,Geração automática de prévias e resumos
+./agents/automation-engineer.agent.md,Automation Engineer,⚙️,Alertas de transferências e cron jobs
