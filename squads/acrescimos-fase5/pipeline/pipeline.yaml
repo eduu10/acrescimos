@@ -1,0 +1,22 @@
+steps:
+  - id: checkpoint-prioridades
+    type: checkpoint
+    label: Prioridades da Fase 5
+  - id: impl-scraping-auto
+    agent: automation-engineer
+    label: Scraping automático via cron
+  - id: impl-espn-uol-sources
+    agent: automation-engineer
+    label: Fontes ESPN Brasil e UOL Esporte
+  - id: impl-ai-previews
+    agent: content-engineer
+    label: Geração automática de prévias de jogos
+  - id: impl-ai-roundup
+    agent: content-engineer
+    label: Resumo automático de rodada
+  - id: impl-amp-pages
+    agent: performance-engineer
+    label: AMP pages para artigos
+  - id: checkpoint-revisao
+    type: checkpoint
+    label: Revisão final e deploy

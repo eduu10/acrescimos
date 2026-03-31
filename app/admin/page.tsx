@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [scrapeError, setScrapeError] = useState('');
   const [scrapeSuccess, setScrapeSuccess] = useState('');
   const [preview, setPreview] = useState<ScrapePreview | null>(null);
+  const [scrapeSource, setScrapeSource] = useState<'all' | 'ge' | 'espn' | 'uol'>('all');
 
   // Image search state
   const [showImageSearch, setShowImageSearch] = useState(false);
@@ -50,7 +51,11 @@ export default function AdminDashboard() {
     setPreview(null);
 
     try {
-      const res = await fetch('/api/scrape', { method: 'POST' });
+      const res = await fetch('/api/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: scrapeSource }),
+      });
       const json = await res.json();
       if (!res.ok) {
         setScrapeError(json.error || 'Erro ao buscar artigo');
@@ -253,19 +258,31 @@ export default function AdminDashboard() {
 
       {/* Import from GE Section */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mt-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
-            <h2 className="font-oswald font-bold text-[#1B2436] text-lg">Importar do GE</h2>
-            <p className="text-xs text-gray-400 mt-1">Busca artigos do ge.globo.com e reescreve com IA</p>
+            <h2 className="font-oswald font-bold text-[#1B2436] text-lg">Importar com IA</h2>
+            <p className="text-xs text-gray-400 mt-1">Busca artigos de fontes esportivas e reescreve com IA</p>
           </div>
-          <button
-            onClick={handleScrape}
-            disabled={scraping}
-            className="flex items-center gap-2 bg-[#F2E205] text-[#1B2436] px-4 py-2 rounded-lg font-bold text-sm hover:bg-yellow-300 transition-colors disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            {scraping ? 'Buscando...' : 'Buscar Próximo Artigo'}
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={scrapeSource}
+              onChange={e => setScrapeSource(e.target.value as typeof scrapeSource)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205]"
+            >
+              <option value="all">Todas as fontes</option>
+              <option value="ge">GE Globo</option>
+              <option value="espn">ESPN Brasil</option>
+              <option value="uol">UOL Esporte</option>
+            </select>
+            <button
+              onClick={handleScrape}
+              disabled={scraping}
+              className="flex items-center gap-2 bg-[#F2E205] text-[#1B2436] px-4 py-2 rounded-lg font-bold text-sm hover:bg-yellow-300 transition-colors disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" />
+              {scraping ? 'Buscando...' : 'Buscar Artigo'}
+            </button>
+          </div>
         </div>
 
         {scrapeError && (

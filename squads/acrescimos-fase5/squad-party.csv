@@ -1,0 +1,4 @@
+path,displayName,icon,role
+./agents/automation-engineer.agent.md,Automation Engineer,⚙️,Scraping automático e fontes de conteúdo
+./agents/content-engineer.agent.md,Content Engineer,✍️,Geração de conteúdo original por IA
+./agents/performance-engineer.agent.md,Performance Engineer,⚡,AMP pages e performance

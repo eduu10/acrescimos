@@ -27,6 +27,9 @@ export async function GET(request: NextRequest) {
       url = `${BASE_URL}/fixtures/events?fixture=${fixtureId}`;
     } else if (type === 'fixture' && fixtureId) {
       url = `${BASE_URL}/fixtures?id=${fixtureId}`;
+    } else if (type === 'upcoming') {
+      const leagueId = searchParams.get('league') || '71';
+      url = `${BASE_URL}/fixtures?league=${leagueId}&season=${season}&next=10`;
     }
 
     const res = await fetch(url, {

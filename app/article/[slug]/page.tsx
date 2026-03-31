@@ -26,6 +26,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description,
     alternates: {
       canonical: articleUrl,
+      types: {
+        'application/vnd.amp.html': `https://acrescimos.com.br/amp/article/${article.slug}`,
+      },
     },
     robots: {
       index: true,

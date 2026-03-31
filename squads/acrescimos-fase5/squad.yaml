@@ -1,0 +1,36 @@
+name: "Acrescimos PRD - Fase 5"
+code: acrescimos-fase5
+description: "Squad de desenvolvimento para implementar a Fase 5 do PRD: Automação de Conteúdo, Fontes Adicionais, Scraping automático, Geração IA original e AMP"
+version: "1.0.0"
+skills:
+  - web_search
+  - web_fetch
+
+pipeline:
+  steps:
+    - id: checkpoint-prioridades
+      file: checkpoint-prioridades
+      type: checkpoint
+    - id: impl-scraping-auto
+      file: impl-scraping-auto
+      agent: automation-engineer
+      execution: inline
+    - id: impl-espn-uol-sources
+      file: impl-espn-uol-sources
+      agent: automation-engineer
+      execution: inline
+    - id: impl-ai-previews
+      file: impl-ai-previews
+      agent: content-engineer
+      execution: inline
+    - id: impl-ai-roundup
+      file: impl-ai-roundup
+      agent: content-engineer
+      execution: inline
+    - id: impl-amp-pages
+      file: impl-amp-pages
+      agent: performance-engineer
+      execution: inline
+    - id: checkpoint-revisao
+      file: checkpoint-revisao
+      type: checkpoint

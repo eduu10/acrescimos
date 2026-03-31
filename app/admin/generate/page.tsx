@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Sparkles, Loader2, CheckCircle, ExternalLink, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, Loader2, CheckCircle, ExternalLink, ChevronDown, Calendar, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 const COMPETITIONS = [
@@ -22,6 +22,12 @@ interface GeneratedArticle {
   category: string;
 }
 
+interface UpcomingFixture {
+  fixture: { id: number; date: string };
+  league: { name: string };
+  teams: { home: { name: string; logo: string }; away: { name: string; logo: string } };
+}
+
 export default function GeneratePage() {
   const [type, setType] = useState<'preview' | 'roundup'>('preview');
 
@@ -35,8 +41,45 @@ export default function GeneratePage() {
   const [round, setRound] = useState('');
 
   const [generating, setGenerating] = useState(false);
+  const [generatingFixtureId, setGeneratingFixtureId] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [result, setResult] = useState<GeneratedArticle | null>(null);
+
+  const [upcomingFixtures, setUpcomingFixtures] = useState<UpcomingFixture[]>([]);
+  const [loadingFixtures, setLoadingFixtures] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/football?type=upcoming&league=71')
+      .then(r => r.json())
+      .then(data => setUpcomingFixtures((data.response || []).slice(0, 6)))
+      .catch(() => {})
+      .finally(() => setLoadingFixtures(false));
+  }, []);
+
+  const generateFromFixture = async (fixture: UpcomingFixture) => {
+    setGeneratingFixtureId(fixture.fixture.id);
+    setError('');
+    setResult(null);
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'preview',
+          team1: fixture.teams.home.name,
+          team2: fixture.teams.away.name,
+          competition: fixture.league.name,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error || 'Erro ao gerar'); return; }
+      setResult(json.article);
+    } catch {
+      setError('Erro de rede.');
+    } finally {
+      setGeneratingFixtureId(null);
+    }
+  };
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -75,6 +118,46 @@ export default function GeneratePage() {
       </div>
 
       <div className="max-w-xl">
+        {/* Upcoming fixtures quick-generate */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Calendar className="w-4 h-4 text-gray-500" />
+            <h2 className="font-bold text-[#1B2436]">Próximos Jogos — Gerar Prévia Rápida</h2>
+          </div>
+          {loadingFixtures ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            </div>
+          ) : upcomingFixtures.length === 0 ? (
+            <p className="text-sm text-gray-400">Nenhum jogo próximo encontrado via API.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {upcomingFixtures.map(f => {
+                const isGenerating = generatingFixtureId === f.fixture.id;
+                const kickoff = new Date(f.fixture.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                return (
+                  <div key={f.fixture.id} className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {f.teams.home.name} <span className="text-gray-400 font-normal">×</span> {f.teams.away.name}
+                      </p>
+                      <p className="text-xs text-gray-400">{f.league.name} · {kickoff}</p>
+                    </div>
+                    <button
+                      onClick={() => generateFromFixture(f)}
+                      disabled={!!generatingFixtureId}
+                      className="flex items-center gap-1 bg-[#F2E205] text-[#1B2436] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-yellow-300 disabled:opacity-50 shrink-0"
+                    >
+                      {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                      {isGenerating ? '...' : 'Gerar'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Type selector */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
           <h2 className="font-bold text-[#1B2436] mb-4">Tipo de conteúdo</h2>
