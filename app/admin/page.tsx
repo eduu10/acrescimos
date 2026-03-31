@@ -29,7 +29,7 @@ export default function AdminDashboard() {
   const [scrapeError, setScrapeError] = useState('');
   const [scrapeSuccess, setScrapeSuccess] = useState('');
   const [preview, setPreview] = useState<ScrapePreview | null>(null);
-  const [scrapeSource, setScrapeSource] = useState<'all' | 'ge' | 'espn' | 'uol'>('all');
+  const [scrapeSource, setScrapeSource] = useState<'all' | 'ge' | 'espn' | 'uol' | 'lance' | 'tnt'>('all');
 
   // Image search state
   const [showImageSearch, setShowImageSearch] = useState(false);
@@ -273,6 +273,8 @@ export default function AdminDashboard() {
               <option value="ge">GE Globo</option>
               <option value="espn">ESPN Brasil</option>
               <option value="uol">UOL Esporte</option>
+              <option value="lance">Lance!</option>
+              <option value="tnt">TNT Sports</option>
             </select>
             <button
               onClick={handleScrape}

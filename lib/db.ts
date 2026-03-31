@@ -328,3 +328,40 @@ export async function addScrapedUrl(url: string): Promise<void> {
     await setSetting('scraped_urls', JSON.stringify(urls));
   }
 }
+
+// Polls
+export interface PollOption {
+  id: number;
+  text: string;
+  votes: number;
+}
+
+export interface Poll {
+  id: number;
+  article_id: number;
+  question: string;
+  options: PollOption[];
+  created_at: string;
+}
+
+export async function createPoll(articleId: number, question: string, optionTexts: string[]): Promise<Poll> {
+  const options: PollOption[] = optionTexts.map((text, i) => ({ id: i + 1, text, votes: 0 }));
+  const rows = await sql()`INSERT INTO polls (article_id, question, options) VALUES (${articleId}, ${question}, ${JSON.stringify(options)}) RETURNING *` as Poll[];
+  return { ...rows[0], options };
+}
+
+export async function getArticlePoll(articleId: number): Promise<Poll | null> {
+  const rows = await sql()`SELECT * FROM polls WHERE article_id = ${articleId} LIMIT 1` as Poll[];
+  if (!rows[0]) return null;
+  const options = typeof rows[0].options === 'string' ? JSON.parse(rows[0].options) : rows[0].options;
+  return { ...rows[0], options };
+}
+
+export async function votePoll(pollId: number, optionId: number): Promise<Poll | null> {
+  const rows = await sql()`SELECT * FROM polls WHERE id = ${pollId}` as Poll[];
+  if (!rows[0]) return null;
+  const options: PollOption[] = typeof rows[0].options === 'string' ? JSON.parse(rows[0].options) : rows[0].options;
+  const updated = options.map(o => o.id === optionId ? { ...o, votes: o.votes + 1 } : o);
+  const result = await sql()`UPDATE polls SET options = ${JSON.stringify(updated)} WHERE id = ${pollId} RETURNING *` as Poll[];
+  return { ...result[0], options: updated };
+}

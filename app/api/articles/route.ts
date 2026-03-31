@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getArticles, countArticles, createArticle } from '@/lib/db';
 import { sanitizeContent, sanitizeText } from '@/lib/sanitize';
+import { postTweet, buildTweetText } from '@/lib/twitter';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -56,6 +57,11 @@ export async function POST(request: NextRequest) {
     featured: featured ?? false,
     scheduled_at: scheduled_at || null,
   });
+
+  // Fire-and-forget: auto-post to X/Twitter if published
+  if (published) {
+    postTweet(buildTweetText(safeTitle, article.slug)).catch(() => {});
+  }
 
   return NextResponse.json(article, { status: 201 });
 }

@@ -114,6 +114,44 @@ export async function scrapeUOL(): Promise<string[]> {
   return urls
 }
 
+// ── Lance! ─────────────────────────────────────────────────────────────────
+
+export async function scrapeLance(): Promise<string[]> {
+  const res = await fetch('https://www.lance.com.br/futebol/', {
+    headers: BROWSER_HEADERS,
+    signal: AbortSignal.timeout(15000),
+  })
+  if (!res.ok) return []
+  const html = await res.text()
+  const urlPattern = /href="(https:\/\/www\.lance\.com\.br\/[^"]*\/[^"]*\.html)"/g
+  const urls: string[] = []
+  let match
+  while ((match = urlPattern.exec(html)) !== null) {
+    const url = match[1].split('#')[0].split('?')[0]
+    if (!urls.includes(url) && !url.includes('/videos/') && !url.includes('/fotos/')) urls.push(url)
+  }
+  return urls.slice(0, 20)
+}
+
+// ── TNT Sports ─────────────────────────────────────────────────────────────
+
+export async function scrapeTNT(): Promise<string[]> {
+  const res = await fetch('https://www.tntsports.com.br/futebol/', {
+    headers: BROWSER_HEADERS,
+    signal: AbortSignal.timeout(15000),
+  })
+  if (!res.ok) return []
+  const html = await res.text()
+  const urlPattern = /href="(https:\/\/www\.tntsports\.com\.br\/[^"]*\/[^"]*\/)"/g
+  const urls: string[] = []
+  let match
+  while ((match = urlPattern.exec(html)) !== null) {
+    const url = match[1].split('#')[0].split('?')[0]
+    if (!urls.includes(url) && url.length > 40) urls.push(url)
+  }
+  return urls.slice(0, 20)
+}
+
 // ── Extract article content from any source ────────────────────────────────
 
 export async function extractArticleContent(url: string): Promise<ScrapedArticle | null> {
@@ -139,6 +177,10 @@ export async function extractArticleContent(url: string): Promise<ScrapedArticle
       content = extractParagraphs(html, 'article-body')
     } else if (url.includes('uol.com.br')) {
       content = extractParagraphs(html, 'text')
+    } else if (url.includes('lance.com.br')) {
+      content = extractParagraphs(html, 'article-body') || extractParagraphs(html)
+    } else if (url.includes('tntsports.com.br')) {
+      content = extractParagraphs(html, 'content') || extractParagraphs(html)
     }
 
     if (!content) {
@@ -153,7 +195,11 @@ export async function extractArticleContent(url: string): Promise<ScrapedArticle
         ? 'espn'
         : url.includes('uol.com.br')
           ? 'uol'
-          : 'unknown'
+          : url.includes('lance.com.br')
+            ? 'lance'
+            : url.includes('tntsports.com.br')
+              ? 'tnt'
+              : 'unknown'
 
     return { title: decodeHtmlEntities(title), content, image, url, source }
   } catch {
@@ -164,12 +210,14 @@ export async function extractArticleContent(url: string): Promise<ScrapedArticle
 // ── Discover all URLs from all sources ─────────────────────────────────────
 
 export async function discoverArticleUrls(
-  source: 'ge' | 'espn' | 'uol' | 'all' = 'all'
+  source: 'ge' | 'espn' | 'uol' | 'lance' | 'tnt' | 'all' = 'all'
 ): Promise<string[]> {
   const scrapers: Record<string, () => Promise<string[]>> = {
     ge: scrapeGE,
     espn: scrapeESPN,
     uol: scrapeUOL,
+    lance: scrapeLance,
+    tnt: scrapeTNT,
   }
 
   if (source !== 'all') {
@@ -177,7 +225,7 @@ export async function discoverArticleUrls(
     return fn ? fn() : []
   }
 
-  const results = await Promise.allSettled([scrapeGE(), scrapeESPN(), scrapeUOL()])
+  const results = await Promise.allSettled([scrapeGE(), scrapeESPN(), scrapeUOL(), scrapeLance(), scrapeTNT()])
   const urls: string[] = []
   for (const result of results) {
     if (result.status === 'fulfilled') {

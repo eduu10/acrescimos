@@ -1,4 +1,4 @@
-import { Search, Menu, Shield } from 'lucide-react';
+import { Search, Menu, Shield, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { WeatherWidget } from './weather-widget';
 import { ThemeToggle } from './theme-toggle';
@@ -37,6 +37,10 @@ export function Header() {
             <Link href="/" className="hover:text-[#F2E205] transition-colors">Início</Link>
             <Link href="/placar" className="hover:text-[#F2E205] transition-colors">Placar</Link>
             <Link href="/classificacao" className="hover:text-[#F2E205] transition-colors">Classificação</Link>
+            <Link href="/ranking" className="hover:text-[#F2E205] transition-colors flex items-center gap-1.5">
+              <TrendingUp className="w-4 h-4" />
+              Ranking
+            </Link>
             <Link href="/ao-vivo" className="hover:text-[#F2E205] transition-colors flex items-center gap-1.5">
               <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
               Ao Vivo

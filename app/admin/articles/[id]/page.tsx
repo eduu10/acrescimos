@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Search, X, Upload, Loader2, Link2, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Search, X, Upload, Loader2, Link2, Sparkles, AlertCircle, CheckCircle2, BarChart2, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { compressImage } from '@/lib/image-compress';
 import { RichEditor } from '@/components/admin/rich-editor';
@@ -40,6 +40,13 @@ export default function EditArticlePage() {
   });
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
 
+  // Poll state
+  const [existingPoll, setExistingPoll] = useState<{ id: number; question: string; options: { id: number; text: string; votes: number }[] } | null>(null);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']);
+  const [savingPoll, setSavingPoll] = useState(false);
+  const [pollStatus, setPollStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
   useEffect(() => {
     fetch(`/api/articles/${params.id}`)
       .then(res => {
@@ -63,6 +70,11 @@ export default function EditArticlePage() {
         fetch(`/api/tags?article_id=${article.id}`)
           .then(r => r.json())
           .then((tags: { id: number }[]) => setSelectedTagIds(tags.map(t => t.id)))
+          .catch(() => {});
+        // Load existing poll
+        fetch(`/api/polls?article_id=${article.id}`)
+          .then(r => r.json())
+          .then(poll => { if (poll?.id) setExistingPoll(poll); })
           .catch(() => {});
       })
       .catch(() => {
@@ -136,6 +148,35 @@ export default function EditArticlePage() {
       const json = await res.json();
       if (res.ok) setImageResults(json.images || []);
     } catch {} finally { setSearchingImages(false); }
+  };
+
+  const handleSavePoll = async () => {
+    const validOptions = pollOptions.filter(o => o.trim());
+    if (!pollQuestion.trim() || validOptions.length < 2) {
+      setPollStatus({ type: 'error', message: 'Pergunta e ao menos 2 opções são obrigatórias.' });
+      return;
+    }
+    setSavingPoll(true);
+    setPollStatus(null);
+    try {
+      const res = await fetch('/api/polls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ article_id: Number(params.id), question: pollQuestion.trim(), options: validOptions }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setExistingPoll(data);
+        setPollQuestion('');
+        setPollOptions(['', '']);
+        setPollStatus({ type: 'success', message: 'Enquete criada com sucesso!' });
+      } else {
+        setPollStatus({ type: 'error', message: data.error || 'Erro ao criar enquete.' });
+      }
+    } catch {
+      setPollStatus({ type: 'error', message: 'Erro de conexão.' });
+    }
+    setSavingPoll(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -428,6 +469,76 @@ export default function EditArticlePage() {
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
                 />
                 {form.scheduled_at && <p className="text-xs text-gray-400 mt-1">O artigo será publicado automaticamente nessa data.</p>}
+              </div>
+            )}
+          </div>
+
+          {/* ── ENQUETE ──────────────────────────────────────────── */}
+          <div className="border border-gray-200 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart2 className="w-4 h-4 text-[#1B2436]" />
+              <h3 className="text-sm font-semibold text-gray-800">Enquete</h3>
+            </div>
+            {existingPoll ? (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-xs font-semibold text-green-800 mb-1">Enquete ativa:</p>
+                <p className="text-sm text-green-700 font-medium mb-2">{existingPoll.question}</p>
+                <ul className="space-y-1">
+                  {existingPoll.options.map(o => (
+                    <li key={o.id} className="text-xs text-green-600 flex justify-between">
+                      <span>{o.text}</span>
+                      <span className="font-bold">{o.votes} votos</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={pollQuestion}
+                  onChange={e => setPollQuestion(e.target.value)}
+                  placeholder="Pergunta da enquete"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
+                />
+                {pollOptions.map((opt, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={opt}
+                      onChange={e => setPollOptions(prev => prev.map((o, j) => j === i ? e.target.value : o))}
+                      placeholder={`Opção ${i + 1}`}
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
+                    />
+                    {pollOptions.length > 2 && (
+                      <button type="button" onClick={() => setPollOptions(prev => prev.filter((_, j) => j !== i))} className="p-2 hover:bg-red-50 rounded-lg text-red-400">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {pollOptions.length < 4 && (
+                    <button type="button" onClick={() => setPollOptions(prev => [...prev, ''])} className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#1B2436] border border-dashed border-gray-300 rounded-lg px-3 py-1.5">
+                      <Plus className="w-3.5 h-3.5" /> Adicionar opção
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleSavePoll}
+                    disabled={savingPoll}
+                    className="flex items-center gap-1.5 bg-[#1B2436] text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-[#F2E205] hover:text-[#1B2436] transition-colors disabled:opacity-50"
+                  >
+                    {savingPoll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BarChart2 className="w-3.5 h-3.5" />}
+                    Criar enquete
+                  </button>
+                </div>
+                {pollStatus && (
+                  <div className={`text-xs rounded-lg px-3 py-2 flex items-center gap-2 ${pollStatus.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                    {pollStatus.type === 'success' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                    {pollStatus.message}
+                  </div>
+                )}
               </div>
             )}
           </div>

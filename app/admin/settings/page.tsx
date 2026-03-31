@@ -132,6 +132,40 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* X / Twitter */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 className="font-bold text-[#1B2436] mb-2">X / Twitter — Auto-post</h2>
+          <p className="text-xs text-gray-400 mb-4">Posta automaticamente ao publicar um artigo. Obtenha as credenciais em <a href="https://developer.twitter.com" target="_blank" rel="noopener noreferrer" className="underline">developer.twitter.com</a></p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <label className="text-sm font-medium text-gray-700">Ativar auto-post no X</label>
+              <button
+                type="button"
+                onClick={() => setSettings(s => ({ ...s, twitter_auto_post: s.twitter_auto_post === 'true' ? 'false' : 'true' }))}
+                className={`relative w-11 h-6 rounded-full transition-colors ${settings.twitter_auto_post === 'true' ? 'bg-[#F2E205]' : 'bg-gray-200'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${settings.twitter_auto_post === 'true' ? 'translate-x-5' : ''}`} />
+              </button>
+            </div>
+            {[
+              { key: 'twitter_api_key', label: 'API Key (Consumer Key)' },
+              { key: 'twitter_api_secret', label: 'API Key Secret (Consumer Secret)' },
+              { key: 'twitter_access_token', label: 'Access Token' },
+              { key: 'twitter_access_secret', label: 'Access Token Secret' },
+            ].map(({ key, label }) => (
+              <div key={key}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                <input
+                  type="password"
+                  value={settings[key] || ''}
+                  onChange={e => setSettings(s => ({ ...s, [key]: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent font-mono"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Other API Keys Info */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="font-bold text-[#1B2436] mb-2">APIs Externas (Vercel)</h2>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getArticleById, updateArticle, deleteArticle } from '@/lib/db';
 import { sanitizeContent, sanitizeText } from '@/lib/sanitize';
+import { postTweet, buildTweetText } from '@/lib/twitter';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -37,8 +38,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (body.image_caption) body.image_caption = sanitizeText(body.image_caption);
   if (body.author) body.author = sanitizeText(body.author);
 
+  const existing = await getArticleById(articleId);
+  const wasUnpublished = existing && !existing.published;
   const article = await updateArticle(articleId, body);
   if (!article) return NextResponse.json({ error: 'Artigo não encontrado' }, { status: 404 });
+
+  // Auto-post to X/Twitter only when article transitions from unpublished → published
+  if (wasUnpublished && body.published === true) {
+    postTweet(buildTweetText(article.title, article.slug)).catch(() => {});
+  }
+
   return NextResponse.json(article);
 }
 

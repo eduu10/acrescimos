@@ -11,6 +11,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArticleTracker } from './tracker';
 import { ArticleSidebar } from './sidebar';
+import { ArticlePoll } from '@/components/article-poll';
 import type { Metadata } from 'next';
 
 export const revalidate = 300; // ISR: revalidate every 5 minutes
@@ -227,6 +228,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                 ))}
               </section>
             </article>
+
+            {/* Poll */}
+            <ArticlePoll articleId={article.id} />
 
             {/* Ad unit - below article */}
             <AdSenseAd slot="1234567890" format="horizontal" className="mb-6 min-h-[90px] flex items-center justify-center" />
