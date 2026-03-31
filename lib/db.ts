@@ -440,16 +440,16 @@ export async function getTransferAlerts(status?: string): Promise<TransferAlert[
   return await sql()`SELECT * FROM transfer_alerts ORDER BY detected_at DESC LIMIT 50` as TransferAlert[];
 }
 
-export async function upsertTransferAlert(data: Pick<TransferAlert, 'url' | 'title' | 'player' | 'from_club' | 'to_club'>): Promise<{ inserted: boolean }> {
+export async function upsertTransferAlert(data: Pick<TransferAlert, 'url' | 'title' | 'player' | 'from_club' | 'to_club'>): Promise<{ inserted: boolean; id: number | null }> {
   const rows = await sql()`
     INSERT INTO transfer_alerts (url, title, player, from_club, to_club)
     VALUES (${data.url}, ${data.title ?? null}, ${data.player ?? null}, ${data.from_club ?? null}, ${data.to_club ?? null})
     ON CONFLICT (url) DO NOTHING
     RETURNING id
   `;
-  return { inserted: rows.length > 0 };
+  return { inserted: rows.length > 0, id: rows[0]?.id ?? null };
 }
 
-export async function updateTransferAlertStatus(id: number, status: 'published' | 'skipped', articleId?: number): Promise<void> {
+export async function updateTransferAlertStatus(id: number, status: 'detected' | 'published' | 'skipped', articleId?: number): Promise<void> {
   await sql()`UPDATE transfer_alerts SET status = ${status}, article_id = ${articleId ?? null} WHERE id = ${id}`;
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { upsertTransferAlert, createArticle, updateTransferAlertStatus, getSetting, getTransferAlerts } from '@/lib/db';
+import { upsertTransferAlert, createArticle, updateTransferAlertStatus, getSetting } from '@/lib/db';
 import OpenAI from 'openai';
 
 export const revalidate = 0;
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     const items = await fetchRssItems(feedUrl);
 
     for (const item of items) {
-      const { inserted } = await upsertTransferAlert({
+      const { inserted, id: alertId } = await upsertTransferAlert({
         url: item.link,
         title: item.title,
         player: null,
@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
       if (inserted) {
         detected++;
 
+        // Generate a draft article linked to the alert (stays as 'detected' for admin review)
         if (groqKey) {
           try {
             const grok = new OpenAI({ apiKey: groqKey, baseURL: 'https://api.groq.com/openai/v1' });
@@ -113,6 +114,7 @@ Responda com JSON: {"title": "título do artigo", "content": "conteúdo com par�
               .replace(/[^a-z0-9]+/g, '-')
               .replace(/^-+|-+$/g, '');
 
+            // Create as draft (published: false) — admin decides whether to publish
             const article = await createArticle({
               title: parsed.title,
               slug: `mercado-${slug}-${Date.now()}`,
@@ -124,9 +126,8 @@ Responda com JSON: {"title": "título do artigo", "content": "conteúdo com par�
               featured: false,
             });
 
-            const alerts = await getTransferAlerts('detected');
-            const alert = alerts.find(a => a.url === item.link);
-            if (alert) await updateTransferAlertStatus(alert.id, 'published', article.id);
+            // Link article draft to alert — keep status 'detected' for admin review
+            if (alertId) await updateTransferAlertStatus(alertId, 'detected', article.id);
             articlesGenerated++;
           } catch { /* skip article generation */ }
         }
