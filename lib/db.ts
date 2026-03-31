@@ -21,19 +21,35 @@ export interface Article {
   clicks: number;
   created_at: string;
   updated_at: string;
+  scheduled_at: string | null;
 }
 
 // Articles
-export async function getArticles(filters?: { published?: boolean; category?: string; featured?: boolean }): Promise<Article[]> {
+export async function getArticles(filters?: { published?: boolean; category?: string; featured?: boolean; limit?: number; offset?: number }): Promise<Article[]> {
   const q = sql();
+  const limit = filters?.limit ?? 100;
+  const offset = filters?.offset ?? 0;
   if (filters?.published !== undefined && filters?.category) {
-    return await q`SELECT * FROM articles WHERE published = ${filters.published} AND LOWER(category) = LOWER(${filters.category}) ORDER BY created_at DESC` as Article[];
+    return await q`SELECT * FROM articles WHERE published = ${filters.published} AND LOWER(category) = LOWER(${filters.category}) ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}` as Article[];
   } else if (filters?.published !== undefined) {
-    return await q`SELECT * FROM articles WHERE published = ${filters.published} ORDER BY created_at DESC` as Article[];
+    return await q`SELECT * FROM articles WHERE published = ${filters.published} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}` as Article[];
   } else if (filters?.featured) {
-    return await q`SELECT * FROM articles WHERE featured = true AND published = true ORDER BY created_at DESC` as Article[];
+    return await q`SELECT * FROM articles WHERE featured = true AND published = true ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}` as Article[];
   }
-  return await q`SELECT * FROM articles ORDER BY created_at DESC` as Article[];
+  return await q`SELECT * FROM articles ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}` as Article[];
+}
+
+export async function countArticles(filters?: { published?: boolean; category?: string }): Promise<number> {
+  const q = sql();
+  let result;
+  if (filters?.published !== undefined && filters?.category) {
+    result = await q`SELECT COUNT(*) as total FROM articles WHERE published = ${filters.published} AND LOWER(category) = LOWER(${filters.category})`;
+  } else if (filters?.published !== undefined) {
+    result = await q`SELECT COUNT(*) as total FROM articles WHERE published = ${filters.published}`;
+  } else {
+    result = await q`SELECT COUNT(*) as total FROM articles`;
+  }
+  return Number(result[0]?.total ?? 0);
 }
 
 export async function getArticleById(id: number): Promise<Article | null> {
@@ -46,9 +62,10 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   return rows[0] || null;
 }
 
-export async function createArticle(data: { title: string; slug: string; content: string; image: string; image_caption?: string; category: string; author: string; published: boolean; featured: boolean }): Promise<Article> {
+export async function createArticle(data: { title: string; slug: string; content: string; image: string; image_caption?: string; category: string; author: string; published: boolean; featured: boolean; scheduled_at?: string | null }): Promise<Article> {
   const caption = data.image_caption || '';
-  const rows = await sql()`INSERT INTO articles (title, slug, content, image, image_caption, category, author, published, featured) VALUES (${data.title}, ${data.slug}, ${data.content}, ${data.image}, ${caption}, ${data.category}, ${data.author}, ${data.published}, ${data.featured}) RETURNING *` as Article[];
+  const scheduled = data.scheduled_at || null;
+  const rows = await sql()`INSERT INTO articles (title, slug, content, image, image_caption, category, author, published, featured, scheduled_at) VALUES (${data.title}, ${data.slug}, ${data.content}, ${data.image}, ${caption}, ${data.category}, ${data.author}, ${data.published}, ${data.featured}, ${scheduled}) RETURNING *` as Article[];
   return rows[0];
 }
 
@@ -65,9 +82,15 @@ export async function updateArticle(id: number, data: Partial<Article>): Promise
   const author = data.author ?? current.author;
   const published = data.published ?? current.published;
   const featured = data.featured ?? current.featured;
+  const scheduled_at = data.scheduled_at !== undefined ? data.scheduled_at : current.scheduled_at;
 
-  const rows = await sql()`UPDATE articles SET title=${title}, slug=${slug}, content=${content}, image=${image}, image_caption=${image_caption}, category=${category}, author=${author}, published=${published}, featured=${featured}, updated_at=NOW() WHERE id=${id} RETURNING *` as Article[];
+  const rows = await sql()`UPDATE articles SET title=${title}, slug=${slug}, content=${content}, image=${image}, image_caption=${image_caption}, category=${category}, author=${author}, published=${published}, featured=${featured}, scheduled_at=${scheduled_at}, updated_at=NOW() WHERE id=${id} RETURNING *` as Article[];
   return rows[0] || null;
+}
+
+export async function publishScheduledArticles(): Promise<number> {
+  const rows = await sql()`UPDATE articles SET published = true, scheduled_at = NULL WHERE scheduled_at IS NOT NULL AND scheduled_at <= NOW() AND published = false RETURNING id`;
+  return rows.length;
 }
 
 export async function deleteArticle(id: number): Promise<boolean> {

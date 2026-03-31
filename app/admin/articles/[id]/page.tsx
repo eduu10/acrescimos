@@ -34,6 +34,7 @@ export default function EditArticlePage() {
     author: '',
     published: true,
     featured: false,
+    scheduled_at: '',
   });
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function EditArticlePage() {
           author: article.author,
           published: article.published,
           featured: article.featured,
+          scheduled_at: article.scheduled_at ? new Date(article.scheduled_at).toISOString().slice(0, 16) : '',
         });
         setLoading(false);
       })
@@ -379,25 +381,39 @@ export default function EditArticlePage() {
             />
           </div>
 
-          <div className="flex items-center gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.published}
-                onChange={e => setForm(f => ({ ...f, published: e.target.checked }))}
-                className="w-4 h-4 accent-[#F2E205]"
-              />
-              <span className="text-sm text-gray-700">Publicado</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.featured}
-                onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))}
-                className="w-4 h-4 accent-[#F2E205]"
-              />
-              <span className="text-sm text-gray-700">Destaque</span>
-            </label>
+          <div className="space-y-3">
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.published}
+                  onChange={e => setForm(f => ({ ...f, published: e.target.checked, scheduled_at: e.target.checked ? '' : f.scheduled_at }))}
+                  className="w-4 h-4 accent-[#F2E205]"
+                />
+                <span className="text-sm text-gray-700">Publicado</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.featured}
+                  onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))}
+                  className="w-4 h-4 accent-[#F2E205]"
+                />
+                <span className="text-sm text-gray-700">Destaque</span>
+              </label>
+            </div>
+            {!form.published && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Agendar publicação (opcional)</label>
+                <input
+                  type="datetime-local"
+                  value={form.scheduled_at}
+                  onChange={e => setForm(f => ({ ...f, scheduled_at: e.target.value }))}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
+                />
+                {form.scheduled_at && <p className="text-xs text-gray-400 mt-1">O artigo será publicado automaticamente nessa data.</p>}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end pt-2">

@@ -22,15 +22,15 @@ export function NewsFeed() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(PAGE_SIZE);
 
   useEffect(() => {
-    fetch(`/api/articles?published=true`)
+    fetch(`/api/articles?published=true&limit=${PAGE_SIZE}&offset=0&count=true`)
       .then(res => res.json())
-      .then((data: Article[]) => {
-        setArticles(data.slice(0, PAGE_SIZE));
-        setHasMore(data.length > PAGE_SIZE);
+      .then((data: { articles: Article[]; total: number }) => {
+        setArticles(data.articles);
+        setHasMore(data.total > PAGE_SIZE);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -39,19 +39,17 @@ export function NewsFeed() {
   const loadMore = useCallback(async () => {
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/articles?published=true`);
-      const data: Article[] = await res.json();
-      const nextPage = page + 1;
-      const start = 0;
-      const end = nextPage * PAGE_SIZE;
-      setArticles(data.slice(start, end));
-      setHasMore(data.length > end);
-      setPage(nextPage);
+      const res = await fetch(`/api/articles?published=true&limit=${PAGE_SIZE}&offset=${offset}&count=true`);
+      const data: { articles: Article[]; total: number } = await res.json();
+      const newArticles = [...articles, ...data.articles];
+      setArticles(newArticles);
+      setHasMore(newArticles.length < data.total);
+      setOffset(prev => prev + PAGE_SIZE);
     } catch {
       // silently fail
     }
     setLoadingMore(false);
-  }, [page]);
+  }, [offset, articles]);
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
