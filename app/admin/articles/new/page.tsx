@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Search, X, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, Search, X, ImageIcon, Upload, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 const CATEGORIES = ['Brasileirão', 'Futebol Internacional', 'Copa do Brasil', 'Libertadores', 'Basquete', 'Fórmula 1', 'Tênis', 'Vôlei', 'Mercado da Bola', 'Opinião', 'Geral'];
@@ -10,6 +10,8 @@ const CATEGORIES = ['Brasileirão', 'Futebol Internacional', 'Copa do Brasil', '
 export default function NewArticlePage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showImageSearch, setShowImageSearch] = useState(false);
   const [imageQuery, setImageQuery] = useState('');
   const [imageResults, setImageResults] = useState<{ id: number; url: string; thumb: string; alt: string }[]>([]);
@@ -23,6 +25,27 @@ export default function NewArticlePage() {
     published: true,
     featured: false,
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setForm(f => ({ ...f, image: data.url }));
+      } else {
+        alert(data.error || 'Erro no upload');
+      }
+    } catch {
+      alert('Erro ao enviar imagem');
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const handleImageSearch = async (query?: string) => {
     const q = query || imageQuery;
@@ -93,11 +116,33 @@ export default function NewArticlePage() {
               </div>
             )}
             {!form.image && (
-              <div className="h-32 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center mb-2">
-                <ImageIcon className="w-8 h-8 text-gray-300 mb-1" />
-                <span className="text-xs text-gray-400">Sem imagem</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full h-32 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 hover:border-[#F2E205] hover:bg-yellow-50 flex flex-col items-center justify-center mb-2 cursor-pointer transition-colors"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-8 h-8 text-[#F2E205] mb-1 animate-spin" />
+                    <span className="text-xs text-gray-500">Enviando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 text-gray-300 mb-1" />
+                    <span className="text-xs text-gray-500 font-medium">Clique para enviar imagem</span>
+                    <span className="text-[10px] text-gray-400 mt-0.5">JPG, PNG, WebP — máx. 5MB</span>
+                  </>
+                )}
+              </button>
             )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
             <div className="flex gap-2">
               <input
                 type="text"
@@ -106,6 +151,15 @@ export default function NewArticlePage() {
                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
                 placeholder="URL da imagem ou busque abaixo"
               />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1 bg-[#1B2436] hover:bg-[#F2E205] hover:text-[#1B2436] text-white px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
+              >
+                <Upload className="w-4 h-4" />
+                <span>{uploading ? '...' : 'Upload'}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => { setShowImageSearch(!showImageSearch); setImageQuery(form.title.split(' ').slice(0, 3).join(' ')); if (!showImageSearch && form.title) handleImageSearch(form.title.split(' ').slice(0, 3).join(' ')); }}
