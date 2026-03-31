@@ -2,6 +2,16 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: '/((?!admin|api).*)',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'max-image-preview:large' },
+        ],
+      },
+    ];
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

@@ -2,6 +2,7 @@ import { Search, Menu, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { WeatherWidget } from './weather-widget';
 import { ThemeToggle } from './theme-toggle';
+import { PushSubscribeButton } from './push-subscribe';
 
 const TEAMS = [
   'Cruzeiro', 'Atlético-MG', 'Flamengo', 'Palmeiras', 'Corinthians',
@@ -36,6 +37,10 @@ export function Header() {
             <Link href="/" className="hover:text-[#F2E205] transition-colors">Início</Link>
             <Link href="/placar" className="hover:text-[#F2E205] transition-colors">Placar</Link>
             <Link href="/classificacao" className="hover:text-[#F2E205] transition-colors">Classificação</Link>
+            <Link href="/ao-vivo" className="hover:text-[#F2E205] transition-colors flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              Ao Vivo
+            </Link>
           </nav>
 
           {/* Right: Weather, Search, Theme & Account */}
@@ -51,6 +56,7 @@ export function Header() {
               />
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
+            <PushSubscribeButton />
             <ThemeToggle />
             <Link href="/admin" className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Admin">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

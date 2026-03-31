@@ -234,6 +234,60 @@ export async function getSubscriberCount(): Promise<number> {
   return Number(rows[0]?.total || 0);
 }
 
+// Comments
+export interface Comment {
+  id: number;
+  article_id: number;
+  author_name: string;
+  content: string;
+  approved: boolean;
+  created_at: string;
+}
+
+export async function getApprovedComments(articleId: number): Promise<Comment[]> {
+  return await sql()`SELECT * FROM comments WHERE article_id = ${articleId} AND approved = true ORDER BY created_at DESC` as Comment[];
+}
+
+export async function createComment(articleId: number, authorName: string, content: string): Promise<Comment> {
+  const rows = await sql()`INSERT INTO comments (article_id, author_name, content) VALUES (${articleId}, ${authorName}, ${content}) RETURNING *` as Comment[];
+  return rows[0];
+}
+
+export async function getPendingComments(): Promise<(Comment & { article_title: string })[]> {
+  return await sql()`SELECT c.*, a.title as article_title FROM comments c JOIN articles a ON a.id = c.article_id WHERE c.approved = false ORDER BY c.created_at DESC` as (Comment & { article_title: string })[];
+}
+
+export async function approveComment(id: number): Promise<boolean> {
+  const rows = await sql()`UPDATE comments SET approved = true WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
+export async function deleteComment(id: number): Promise<boolean> {
+  const rows = await sql()`DELETE FROM comments WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
+// Push subscriptions
+export interface PushSubscription {
+  id: number;
+  endpoint: string;
+  keys_p256dh: string;
+  keys_auth: string;
+  created_at: string;
+}
+
+export async function savePushSubscription(endpoint: string, p256dh: string, auth: string): Promise<void> {
+  await sql()`INSERT INTO push_subscriptions (endpoint, keys_p256dh, keys_auth) VALUES (${endpoint}, ${p256dh}, ${auth}) ON CONFLICT (endpoint) DO UPDATE SET keys_p256dh = ${p256dh}, keys_auth = ${auth}`;
+}
+
+export async function deletePushSubscription(endpoint: string): Promise<void> {
+  await sql()`DELETE FROM push_subscriptions WHERE endpoint = ${endpoint}`;
+}
+
+export async function getAllPushSubscriptions(): Promise<PushSubscription[]> {
+  return await sql()`SELECT * FROM push_subscriptions` as PushSubscription[];
+}
+
 // Scraped URLs tracking
 export async function getScrapedUrls(): Promise<string[]> {
   const value = await getSetting('scraped_urls');

@@ -2,6 +2,9 @@ import { getArticleBySlug, getArticles } from '@/lib/db';
 import { Header } from '@/components/header';
 import { JsonLd } from '@/components/json-ld';
 import { FaqSchema, generateArticleFAQs } from '@/components/faq-schema';
+import { ArticleComments } from '@/components/article-comments';
+import { SocialShareBar } from '@/components/social-share-bar';
+import { AdSenseAd } from '@/components/adsense';
 import { notFound } from 'next/navigation';
 import { Clock, User, ArrowLeft, Eye, Tag, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -210,13 +213,19 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               </section>
             </article>
 
+            {/* Ad unit - below article */}
+            <AdSenseAd slot="1234567890" format="horizontal" className="mb-6 min-h-[90px] flex items-center justify-center" />
+
             {/* Share bar */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <span className="text-sm text-gray-500 dark:text-gray-400">Gostou? Compartilhe!</span>
-                <ArticleSidebar type="share" title={article.title} slug={article.slug} />
+                <SocialShareBar title={article.title} slug={article.slug} articleId={article.id} />
               </div>
             </div>
+
+            {/* Comments */}
+            <ArticleComments articleId={article.id} />
 
             {/* Related articles - mobile */}
             <div className="lg:hidden">
