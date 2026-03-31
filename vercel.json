@@ -18,7 +18,7 @@
     },
     {
       "path": "/api/cron/transfers",
-      "schedule": "0 */4 * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }
