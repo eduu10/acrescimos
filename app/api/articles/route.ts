@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getArticles, countArticles, createArticle } from '@/lib/db';
+import { sanitizeContent, sanitizeText } from '@/lib/sanitize';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -39,14 +40,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Título e conteúdo são obrigatórios' }, { status: 400 });
   }
 
-  const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const safeTitle = sanitizeText(title).trim();
+  const safeContent = sanitizeContent(content);
+  const safeCaption = image_caption ? sanitizeText(image_caption) : '';
+
+  const slug = safeTitle.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
   const article = await createArticle({
-    title, slug, content,
+    title: safeTitle, slug, content: safeContent,
     image: image || '',
-    image_caption: image_caption || '',
+    image_caption: safeCaption,
     category: category || 'Geral',
-    author: author || 'Redação Acréscimos',
+    author: sanitizeText(author || 'Redação Acréscimos'),
     published: published ?? true,
     featured: featured ?? false,
     scheduled_at: scheduled_at || null,

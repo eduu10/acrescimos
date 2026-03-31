@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Search, X, Upload, Loader2, Link2, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { compressImage } from '@/lib/image-compress';
+import { RichEditor } from '@/components/admin/rich-editor';
+import { TagSelector } from '@/components/admin/tag-selector';
 
 const CATEGORIES = ['Brasileirão', 'Futebol Internacional', 'Copa do Brasil', 'Libertadores', 'Basquete', 'Fórmula 1', 'Tênis', 'Vôlei', 'Mercado da Bola', 'Opinião', 'Geral'];
 
@@ -34,6 +36,8 @@ export default function NewArticlePage() {
     featured: false,
     scheduled_at: '',
   });
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [savedArticleId, setSavedArticleId] = useState<number | null>(null);
 
   const handleImportUrl = async (rewrite: boolean) => {
     if (!importUrl.trim()) return;
@@ -117,6 +121,14 @@ export default function NewArticlePage() {
       body: JSON.stringify(form),
     });
     if (res.ok) {
+      const article = await res.json();
+      if (selectedTagIds.length > 0) {
+        await fetch('/api/tags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ article_id: article.id, tag_ids: selectedTagIds }),
+        });
+      }
       router.push('/admin/articles');
     } else {
       alert('Erro ao salvar artigo');
@@ -344,14 +356,17 @@ export default function NewArticlePage() {
           {/* ── CONTENT ───────────────────────────────────────────── */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo</label>
-            <textarea
-              value={form.content}
-              onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-              rows={12}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent resize-y"
-              placeholder="Escreva o conteúdo do artigo aqui..."
-              required
+            <RichEditor
+              content={form.content}
+              onChange={html => setForm(f => ({ ...f, content: html }))}
+              theme="light"
             />
+          </div>
+
+          {/* ── TAGS ──────────────────────────────────────────────── */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+            <TagSelector selectedIds={selectedTagIds} onChange={setSelectedTagIds} />
           </div>
 
           {/* ── TOGGLES + SCHEDULING ──────────────────────────────── */}

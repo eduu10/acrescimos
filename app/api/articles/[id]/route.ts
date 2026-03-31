@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getArticleById, updateArticle, deleteArticle } from '@/lib/db';
+import { sanitizeContent, sanitizeText } from '@/lib/sanitize';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,6 +25,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const body = await request.json();
 
   if (body.title) {
+    body.title = sanitizeText(body.title).trim();
     body.slug = body.title
       .toLowerCase()
       .normalize('NFD')
@@ -31,6 +33,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
   }
+  if (body.content) body.content = sanitizeContent(body.content);
+  if (body.image_caption) body.image_caption = sanitizeText(body.image_caption);
+  if (body.author) body.author = sanitizeText(body.author);
 
   const article = await updateArticle(articleId, body);
   if (!article) return NextResponse.json({ error: 'Artigo não encontrado' }, { status: 404 });
