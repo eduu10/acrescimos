@@ -144,6 +144,7 @@ export async function PUT(request: NextRequest) {
       savedArticle = await createArticle({
         title, slug, content,
         image: image || '',
+        image_caption: '',
         category: category || 'Geral',
         author: 'Redação Acréscimos',
         published: false,
@@ -154,6 +155,7 @@ export async function PUT(request: NextRequest) {
       savedArticle = await createArticle({
         title, slug, content,
         image: image || '',
+        image_caption: '',
         category: category || 'Geral',
         author: 'Redação Acréscimos',
         published: false,

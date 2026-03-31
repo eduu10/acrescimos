@@ -151,6 +151,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-oswald font-bold text-white leading-tight max-w-3xl">
               {article.title}
             </h1>
+            {article.image_caption && (
+              <p className="text-xs text-gray-300 mt-2 opacity-80">{article.image_caption}</p>
+            )}
           </figcaption>
         </figure>
       )}

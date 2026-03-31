@@ -13,6 +13,7 @@ export interface Article {
   slug: string;
   content: string;
   image: string;
+  image_caption: string;
   category: string;
   author: string;
   published: boolean;
@@ -45,8 +46,9 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   return rows[0] || null;
 }
 
-export async function createArticle(data: { title: string; slug: string; content: string; image: string; category: string; author: string; published: boolean; featured: boolean }): Promise<Article> {
-  const rows = await sql()`INSERT INTO articles (title, slug, content, image, category, author, published, featured) VALUES (${data.title}, ${data.slug}, ${data.content}, ${data.image}, ${data.category}, ${data.author}, ${data.published}, ${data.featured}) RETURNING *` as Article[];
+export async function createArticle(data: { title: string; slug: string; content: string; image: string; image_caption?: string; category: string; author: string; published: boolean; featured: boolean }): Promise<Article> {
+  const caption = data.image_caption || '';
+  const rows = await sql()`INSERT INTO articles (title, slug, content, image, image_caption, category, author, published, featured) VALUES (${data.title}, ${data.slug}, ${data.content}, ${data.image}, ${caption}, ${data.category}, ${data.author}, ${data.published}, ${data.featured}) RETURNING *` as Article[];
   return rows[0];
 }
 
@@ -58,12 +60,13 @@ export async function updateArticle(id: number, data: Partial<Article>): Promise
   const slug = data.slug ?? current.slug;
   const content = data.content ?? current.content;
   const image = data.image ?? current.image;
+  const image_caption = data.image_caption ?? current.image_caption ?? '';
   const category = data.category ?? current.category;
   const author = data.author ?? current.author;
   const published = data.published ?? current.published;
   const featured = data.featured ?? current.featured;
 
-  const rows = await sql()`UPDATE articles SET title=${title}, slug=${slug}, content=${content}, image=${image}, category=${category}, author=${author}, published=${published}, featured=${featured}, updated_at=NOW() WHERE id=${id} RETURNING *` as Article[];
+  const rows = await sql()`UPDATE articles SET title=${title}, slug=${slug}, content=${content}, image=${image}, image_caption=${image_caption}, category=${category}, author=${author}, published=${published}, featured=${featured}, updated_at=NOW() WHERE id=${id} RETURNING *` as Article[];
   return rows[0] || null;
 }
 

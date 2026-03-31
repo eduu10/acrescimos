@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Search, X, ImageIcon, Upload, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Search, X, Upload, Loader2, Link2, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { compressImage } from '@/lib/image-compress';
 
@@ -17,15 +17,60 @@ export default function NewArticlePage() {
   const [imageQuery, setImageQuery] = useState('');
   const [imageResults, setImageResults] = useState<{ id: number; url: string; thumb: string; alt: string }[]>([]);
   const [searchingImages, setSearchingImages] = useState(false);
+
+  // URL import state
+  const [importUrl, setImportUrl] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
+
   const [form, setForm] = useState({
     title: '',
     content: '',
     image: '',
+    image_caption: '',
     category: 'Geral',
     author: 'Redação Acréscimos',
     published: true,
     featured: false,
   });
+
+  const handleImportUrl = async (rewrite: boolean) => {
+    if (!importUrl.trim()) return;
+    setImporting(true);
+    setImportStatus(null);
+    try {
+      const res = await fetch('/api/import-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: importUrl.trim(), rewrite }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setImportStatus({ type: 'error', message: data.error || 'Erro ao importar' });
+        return;
+      }
+      setForm(f => ({
+        ...f,
+        title: data.title || f.title,
+        content: data.content || f.content,
+        image: data.image || f.image,
+        category: data.category || f.category,
+      }));
+      if (data.warning) {
+        setImportStatus({ type: 'warning', message: data.warning });
+      } else {
+        setImportStatus({
+          type: 'success',
+          message: rewrite
+            ? 'Matéria importada e reescrita com IA com sucesso!'
+            : 'Matéria importada com sucesso! Edite antes de publicar.',
+        });
+      }
+    } catch {
+      setImportStatus({ type: 'error', message: 'Erro de conexão ao importar' });
+    }
+    setImporting(false);
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,13 +110,11 @@ export default function NewArticlePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-
     const res = await fetch('/api/articles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     });
-
     if (res.ok) {
       router.push('/admin/articles');
     } else {
@@ -91,7 +134,57 @@ export default function NewArticlePage() {
 
       <form onSubmit={handleSubmit} className="max-w-3xl">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col gap-5">
-          {/* Title */}
+
+          {/* ── IMPORT FROM URL ───────────────────────────────────── */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <label className="block text-sm font-semibold text-blue-800 mb-2 flex items-center gap-1.5">
+              <Link2 className="w-4 h-4" />
+              Importar matéria por link
+            </label>
+            <p className="text-xs text-blue-600 mb-3">Cole o link de uma matéria para preencher automaticamente o título, imagem e conteúdo.</p>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="url"
+                value={importUrl}
+                onChange={e => { setImportUrl(e.target.value); setImportStatus(null); }}
+                placeholder="https://ge.globo.com/futebol/..."
+                className="flex-1 border border-blue-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-white"
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleImportUrl(false))}
+              />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handleImportUrl(false)}
+                disabled={importing || !importUrl.trim()}
+                className="flex items-center gap-1.5 bg-white border border-blue-300 text-blue-700 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                Importar dados
+              </button>
+              <button
+                type="button"
+                onClick={() => handleImportUrl(true)}
+                disabled={importing || !importUrl.trim()}
+                className="flex items-center gap-1.5 bg-[#1B2436] hover:bg-[#F2E205] hover:text-[#1B2436] text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
+              >
+                {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                Importar + Reescrever com IA
+              </button>
+            </div>
+            {importStatus && (
+              <div className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2 ${
+                importStatus.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' :
+                importStatus.type === 'warning' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {importStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />}
+                {importStatus.message}
+              </div>
+            )}
+          </div>
+
+          {/* ── TITLE ─────────────────────────────────────────────── */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
             <input
@@ -104,7 +197,7 @@ export default function NewArticlePage() {
             />
           </div>
 
-          {/* Image */}
+          {/* ── IMAGE ─────────────────────────────────────────────── */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Imagem</label>
             {form.image && (
@@ -208,10 +301,23 @@ export default function NewArticlePage() {
                 <p className="text-[10px] text-gray-400 mt-2">Imagens por Pexels</p>
               </div>
             )}
+
+            {/* ── IMAGE CAPTION ─────────────────────────────────── */}
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Descrição / Créditos da imagem</label>
+              <input
+                type="text"
+                value={form.image_caption}
+                onChange={e => setForm(f => ({ ...f, image_caption: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent"
+                placeholder="Ex: Jogador em ação durante a partida. Foto: Nome do fotógrafo / Agência"
+                maxLength={300}
+              />
+            </div>
           </div>
 
+          {/* ── CATEGORY + AUTHOR ─────────────────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Category */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
               <select
@@ -222,8 +328,6 @@ export default function NewArticlePage() {
                 {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
             </div>
-
-            {/* Author */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Autor</label>
               <input
@@ -236,7 +340,7 @@ export default function NewArticlePage() {
             </div>
           </div>
 
-          {/* Content */}
+          {/* ── CONTENT ───────────────────────────────────────────── */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo</label>
             <textarea
@@ -249,7 +353,7 @@ export default function NewArticlePage() {
             />
           </div>
 
-          {/* Toggles */}
+          {/* ── TOGGLES ───────────────────────────────────────────── */}
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -271,7 +375,7 @@ export default function NewArticlePage() {
             </label>
           </div>
 
-          {/* Submit */}
+          {/* ── SUBMIT ────────────────────────────────────────────── */}
           <div className="flex justify-end pt-2">
             <button
               type="submit"

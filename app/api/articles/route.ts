@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   if (!token) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
   const body = await request.json();
-  const { title, content, image, category, author, published, featured } = body;
+  const { title, content, image, image_caption, category, author, published, featured } = body;
 
   if (!title || !content) {
     return NextResponse.json({ error: 'Título e conteúdo são obrigatórios' }, { status: 400 });
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
   const article = await createArticle({
     title, slug, content,
     image: image || '',
+    image_caption: image_caption || '',
     category: category || 'Geral',
     author: author || 'Redação Acréscimos',
     published: published ?? true,
