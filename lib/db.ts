@@ -253,8 +253,8 @@ export async function createComment(articleId: number, authorName: string, conte
   return rows[0];
 }
 
-export async function getPendingComments(): Promise<(Comment & { article_title: string })[]> {
-  return await sql()`SELECT c.*, a.title as article_title FROM comments c JOIN articles a ON a.id = c.article_id WHERE c.approved = false ORDER BY c.created_at DESC` as (Comment & { article_title: string })[];
+export async function getPendingComments(): Promise<(Comment & { article_title: string; article_slug: string })[]> {
+  return await sql()`SELECT c.*, a.title as article_title, a.slug as article_slug FROM comments c JOIN articles a ON a.id = c.article_id WHERE c.approved = false ORDER BY c.created_at DESC` as (Comment & { article_title: string; article_slug: string })[];
 }
 
 export async function approveComment(id: number): Promise<boolean> {

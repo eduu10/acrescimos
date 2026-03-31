@@ -76,7 +76,7 @@ export function LiveCoverageClient() {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <div className="animate-spin w-10 h-10 border-3 border-[#F2E205] border-t-transparent rounded-full" />
+        <div className="animate-spin w-10 h-10 border-2 border-[#F2E205] border-t-transparent rounded-full" />
       </div>
     );
   }

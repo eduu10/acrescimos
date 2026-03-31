@@ -8,6 +8,7 @@ interface PendingComment {
   id: number;
   article_id: number;
   article_title: string;
+  article_slug: string;
   author_name: string;
   content: string;
   approved: boolean;
@@ -82,7 +83,7 @@ export default function CommentsPage() {
                   <p className="text-xs text-gray-500 flex items-center gap-1">
                     Artigo:
                     <Link
-                      href={`/api/articles/${comment.article_id}`}
+                      href={`/article/${comment.article_slug}`}
                       target="_blank"
                       className="text-[#1B2436] hover:text-[#F2E205] font-medium flex items-center gap-0.5"
                     >
