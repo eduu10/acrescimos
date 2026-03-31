@@ -1,0 +1,79 @@
+name: "Acrescimos PRD - Fase 1"
+code: acrescimos-prd
+description: "Squad de desenvolvimento para implementar a Fase 1 do PRD: SEO/GEO avancado e Seguranca"
+version: "1.0.0"
+skills:
+  - web_search
+  - web_fetch
+
+pipeline:
+  steps:
+    # Step 1: Checkpoint - Definir prioridades da Fase 1
+    - id: checkpoint-prioridades
+      file: checkpoint-prioridades
+      type: checkpoint
+
+    # Step 2: Implementar sitemap.xml dinamico
+    - id: impl-sitemap
+      file: impl-sitemap
+      agent: seo-engineer
+      execution: inline
+
+    # Step 3: Implementar robots.txt
+    - id: impl-robots
+      file: impl-robots
+      agent: seo-engineer
+      execution: inline
+
+    # Step 4: Implementar Structured Data (JSON-LD)
+    - id: impl-jsonld
+      file: impl-jsonld
+      agent: seo-engineer
+      execution: inline
+
+    # Step 5: Implementar Canonical URLs
+    - id: impl-canonical
+      file: impl-canonical
+      agent: seo-engineer
+      execution: inline
+
+    # Step 6: Meta tags completas em todas as paginas
+    - id: impl-metatags
+      file: impl-metatags
+      agent: seo-engineer
+      execution: inline
+
+    # Step 7: FAQ Schema para GEO
+    - id: impl-faq-schema
+      file: impl-faq-schema
+      agent: geo-engineer
+      execution: inline
+
+    # Step 8: HTML semantico em artigos
+    - id: impl-semantic-html
+      file: impl-semantic-html
+      agent: geo-engineer
+      execution: inline
+
+    # Step 9: Hash de senhas com bcrypt
+    - id: impl-bcrypt
+      file: impl-bcrypt
+      agent: security-engineer
+      execution: inline
+
+    # Step 10: Rate limiting no login
+    - id: impl-rate-limit
+      file: impl-rate-limit
+      agent: security-engineer
+      execution: inline
+
+    # Step 11: CSRF protection
+    - id: impl-csrf
+      file: impl-csrf
+      agent: security-engineer
+      execution: inline
+
+    # Step 12: Checkpoint final - Revisao
+    - id: checkpoint-revisao
+      file: checkpoint-revisao
+      type: checkpoint

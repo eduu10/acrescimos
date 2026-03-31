@@ -1,0 +1,4 @@
+id,displayName,icon,role,path
+seo-engineer,SEO Engineer,🔍,Especialista em SEO tecnico e otimizacao para mecanismos de busca,./agents/seo-engineer.agent.md
+geo-engineer,GEO Engineer,🤖,Especialista em Generative Engine Optimization para LLMs,./agents/geo-engineer.agent.md
+security-engineer,Security Engineer,🔒,Especialista em seguranca de aplicacoes web,./agents/security-engineer.agent.md

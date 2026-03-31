@@ -5,8 +5,26 @@ import { ScoreBoard } from '@/components/score-board';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Placar Ao Vivo - Acréscimos',
-  description: 'Acompanhe os placares dos jogos de hoje em tempo real. Todos os campeonatos organizados por liga.',
+  title: 'Placar Ao Vivo',
+  description: 'Acompanhe os placares dos jogos de hoje em tempo real. Brasileirão, Libertadores, Premier League e mais campeonatos.',
+  alternates: {
+    canonical: 'https://acrescimos.com.br/placar',
+  },
+  openGraph: {
+    title: 'Placar Ao Vivo - Acréscimos',
+    description: 'Acompanhe os placares dos jogos de hoje em tempo real.',
+    url: 'https://acrescimos.com.br/placar',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Acréscimos',
+    images: [{ url: 'https://acrescimos.com.br/icon.svg', alt: 'Acréscimos Placar' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Placar Ao Vivo - Acréscimos',
+    description: 'Placares em tempo real de todos os campeonatos.',
+    images: ['https://acrescimos.com.br/icon.svg'],
+  },
 };
 
 export default function PlacarPage() {

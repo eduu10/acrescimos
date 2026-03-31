@@ -10,3 +10,12 @@ public/uploads/*
 !public/uploads/.gitkeep
 
 .vercel
+.env*.local
+env
+*.bak
+_opensquad/_browser_profile/
+_opensquad/_investigations/
+_opensquad/logs/
+squads/*/output/
+squads/*/state.json
+squads/*/_memory/runs.md

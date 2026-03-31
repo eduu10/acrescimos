@@ -1,5 +1,6 @@
 import type {Metadata} from 'next';
 import {Inter, Oswald} from 'next/font/google';
+import {JsonLd} from '@/components/json-ld';
 import './globals.css';
 
 const inter = Inter({
@@ -15,14 +16,51 @@ const oswald = Oswald({
 });
 
 export const metadata: Metadata = {
-  title: 'Acréscimos - A Notícia Além do Tempo',
-  description: 'O seu portal de notícias de esportes.',
+  metadataBase: new URL('https://acrescimos.com.br'),
+  title: {
+    default: 'Acréscimos - A Notícia Além do Tempo',
+    template: '%s | Acréscimos',
+  },
+  description: 'Portal de notícias esportivas focado no futebol brasileiro. Placares ao vivo, classificações, mercado da bola e muito mais.',
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Acréscimos',
+    url: 'https://acrescimos.com.br',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="pt-BR" className={`${inter.variable} ${oswald.variable}`}>
       <body className="font-sans antialiased bg-gray-50 text-gray-900">
+        <JsonLd
+          data={{
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Acréscimos',
+            url: 'https://acrescimos.com.br',
+            logo: 'https://acrescimos.com.br/icon.svg',
+            description: 'Portal de notícias esportivas focado no futebol brasileiro',
+            sameAs: [],
+          }}
+        />
+        <JsonLd
+          data={{
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Acréscimos',
+            url: 'https://acrescimos.com.br',
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: 'https://acrescimos.com.br/busca?q={search_term_string}',
+              'query-input': 'required name=search_term_string',
+            },
+          }}
+        />
         {children}
       </body>
     </html>

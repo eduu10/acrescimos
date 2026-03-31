@@ -1,5 +1,7 @@
 import { getArticleBySlug, getArticles } from '@/lib/db';
 import { Header } from '@/components/header';
+import { JsonLd } from '@/components/json-ld';
+import { FaqSchema, generateArticleFAQs } from '@/components/faq-schema';
 import { notFound } from 'next/navigation';
 import { Clock, User, ArrowLeft, Eye, Tag, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -14,16 +16,31 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) return { title: 'Artigo não encontrado - Acréscimos' };
+  const description = article.content.slice(0, 160);
+  const articleUrl = `https://acrescimos.com.br/article/${article.slug}`;
   return {
-    title: `${article.title} - Acréscimos`,
-    description: article.content.slice(0, 160),
+    title: article.title,
+    description,
+    alternates: {
+      canonical: articleUrl,
+    },
     openGraph: {
       title: article.title,
-      description: article.content.slice(0, 160),
-      images: article.image ? [article.image] : [],
+      description,
+      url: articleUrl,
+      images: article.image ? [{ url: article.image, alt: article.title }] : [],
       type: 'article',
+      locale: 'pt_BR',
+      siteName: 'Acréscimos',
       publishedTime: article.created_at,
+      modifiedTime: article.updated_at,
       authors: [article.author],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description,
+      images: article.image ? [article.image] : [],
     },
   };
 }
@@ -62,28 +79,77 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       <Header />
       <ArticleTracker articleId={article.id} />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'NewsArticle',
+          headline: article.title,
+          image: article.image || undefined,
+          datePublished: article.created_at,
+          dateModified: article.updated_at,
+          author: { '@type': 'Person', name: article.author },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Acréscimos',
+            logo: { '@type': 'ImageObject', url: 'https://acrescimos.com.br/icon.svg' },
+          },
+          description: article.content.slice(0, 160),
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `https://acrescimos.com.br/article/${article.slug}`,
+          },
+        }}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://acrescimos.com.br' },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: article.category,
+              item: `https://acrescimos.com.br/categoria/${article.category.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`,
+            },
+            { '@type': 'ListItem', position: 3, name: article.title },
+          ],
+        }}
+      />
+      <FaqSchema faqs={generateArticleFAQs(article.category, article.title)} />
+
+      {/* Breadcrumb navigation */}
+      <nav aria-label="Breadcrumb" className="container mx-auto px-4 py-3 max-w-5xl">
+        <ol className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <li><Link href="/" className="hover:text-[#1B2436] dark:hover:text-white">Home</Link></li>
+          <li aria-hidden="true">/</li>
+          <li><span>{article.category}</span></li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page" className="text-gray-900 dark:text-white truncate max-w-[200px]">{article.title}</li>
+        </ol>
+      </nav>
 
       {/* Hero image */}
       {article.image && (
-        <div className="relative w-full h-[300px] sm:h-[400px] lg:h-[450px] bg-gray-800">
+        <figure className="relative w-full h-[300px] sm:h-[400px] lg:h-[450px] bg-gray-800">
           <Image
             src={article.image}
-            alt={article.title}
+            alt={`Imagem ilustrativa: ${article.title}`}
             fill
             className="object-cover opacity-80"
             unoptimized
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 container mx-auto px-4 pb-8 max-w-5xl">
+          <figcaption className="absolute bottom-0 left-0 right-0 container mx-auto px-4 pb-8 max-w-5xl">
             <span className="inline-block px-3 py-1 bg-[#F2E205] text-[#1B2436] text-xs font-bold uppercase tracking-wider rounded-sm mb-3">
               {article.category}
             </span>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-oswald font-bold text-white leading-tight max-w-3xl">
               {article.title}
             </h1>
-          </div>
-        </div>
+          </figcaption>
+        </figure>
       )}
 
       <main className="flex-1 container mx-auto px-4 py-6 max-w-5xl">
@@ -115,14 +181,14 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
             {/* Meta bar */}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-500 dark:text-gray-400 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <span className="flex items-center gap-1.5">
+              <address className="flex items-center gap-1.5 not-italic">
                 <User className="w-4 h-4" />
                 {article.author}
-              </span>
-              <span className="flex items-center gap-1.5">
+              </address>
+              <time dateTime={article.created_at} className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />
                 {formattedDate}
-              </span>
+              </time>
               <span className="flex items-center gap-1.5">
                 <Eye className="w-4 h-4" />
                 {readingTime} min de leitura
@@ -135,13 +201,13 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
             {/* Article body */}
             <article className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 sm:p-8 mb-6">
-              <div className="prose prose-lg max-w-none dark:prose-invert">
+              <section className="prose prose-lg max-w-none dark:prose-invert">
                 {paragraphs.map((paragraph, i) => (
                   <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-5 text-base sm:text-lg">
                     {paragraph}
                   </p>
                 ))}
-              </div>
+              </section>
             </article>
 
             {/* Share bar */}
@@ -162,7 +228,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                       <Link key={related.id} href={`/article/${related.slug}`} className="flex gap-3 group">
                         <div className="w-20 h-14 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
                           {related.image ? (
-                            <img src={related.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            <img src={related.image} alt={`Imagem: ${related.title}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                           ) : (
                             <div className="w-full h-full bg-gray-200 dark:bg-gray-600" />
                           )}

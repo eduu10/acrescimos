@@ -9,6 +9,30 @@ import { MatchCountdown } from '@/components/match-countdown';
 import { TodayMatches } from '@/components/today-matches';
 import { Video } from 'lucide-react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Acréscimos - A Notícia Além do Tempo',
+  description: 'Portal de notícias esportivas focado no futebol brasileiro. Placares ao vivo, classificações, mercado da bola e cobertura completa de Minas Gerais.',
+  alternates: {
+    canonical: 'https://acrescimos.com.br',
+  },
+  openGraph: {
+    title: 'Acréscimos - A Notícia Além do Tempo',
+    description: 'Portal de notícias esportivas focado no futebol brasileiro. Placares ao vivo, classificações e muito mais.',
+    url: 'https://acrescimos.com.br',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Acréscimos',
+    images: [{ url: 'https://acrescimos.com.br/icon.svg', alt: 'Acréscimos Logo' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Acréscimos - A Notícia Além do Tempo',
+    description: 'Portal de notícias esportivas focado no futebol brasileiro.',
+    images: ['https://acrescimos.com.br/icon.svg'],
+  },
+};
 
 export default function Home() {
   return (

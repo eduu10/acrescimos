@@ -1,4 +1,5 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
+import bcrypt from 'bcryptjs';
 
 let _sql: NeonQueryFunction<false, false>;
 function sql() {
@@ -107,9 +108,30 @@ export async function getAnalyticsData() {
 }
 
 // Admin
+const BCRYPT_SALT_ROUNDS = 12;
+
 export async function verifyAdmin(username: string, password: string): Promise<boolean> {
-  const rows = await sql()`SELECT * FROM admin_users WHERE username = ${username} AND password = ${password}`;
-  return rows.length > 0;
+  const rows = await sql()`SELECT * FROM admin_users WHERE username = ${username}`;
+  if (rows.length === 0) return false;
+  const storedPassword = rows[0].password as string;
+
+  // Support both bcrypt hashes and plain text (for migration period)
+  if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$')) {
+    return bcrypt.compare(password, storedPassword);
+  }
+
+  // Plain text fallback — auto-migrate to bcrypt on successful login
+  if (password === storedPassword) {
+    const hash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+    await sql()`UPDATE admin_users SET password = ${hash} WHERE username = ${username}`;
+    return true;
+  }
+
+  return false;
+}
+
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 }
 
 // Settings

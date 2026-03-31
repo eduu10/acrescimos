@@ -1,10 +1,12 @@
 import { neon } from '@neondatabase/serverless';
+import bcrypt from 'bcryptjs';
 
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
 }
 
 const sql = neon(process.env.DATABASE_URL);
+const BCRYPT_SALT_ROUNDS = 12;
 
 async function setup() {
     console.log('Creating tables...');
@@ -52,8 +54,9 @@ async function setup() {
     if (!adminPassword) {
           throw new Error('ADMIN_PASSWORD environment variable is not set');
     }
+    const hashedPassword = await bcrypt.hash(adminPassword, BCRYPT_SALT_ROUNDS);
     await sql`INSERT INTO admin_users (username, password)
-        VALUES ('admin', ${adminPassword})
+        VALUES ('admin', ${hashedPassword})
             ON CONFLICT (username) DO NOTHING`;
 
   console.log('Inserting settings...');

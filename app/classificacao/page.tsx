@@ -5,8 +5,26 @@ import { StandingsTable } from '@/components/standings-table';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Classificação - Acréscimos',
-  description: 'Tabelas de classificação do Brasileirão, Premier League, La Liga e Champions League atualizadas.',
+  title: 'Classificação',
+  description: 'Tabelas de classificação atualizadas do Brasileirão, Premier League, La Liga e Champions League.',
+  alternates: {
+    canonical: 'https://acrescimos.com.br/classificacao',
+  },
+  openGraph: {
+    title: 'Classificação - Acréscimos',
+    description: 'Tabelas de classificação atualizadas dos principais campeonatos.',
+    url: 'https://acrescimos.com.br/classificacao',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Acréscimos',
+    images: [{ url: 'https://acrescimos.com.br/icon.svg', alt: 'Acréscimos Classificação' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Classificação - Acréscimos',
+    description: 'Tabelas de classificação dos principais campeonatos de futebol.',
+    images: ['https://acrescimos.com.br/icon.svg'],
+  },
 };
 
 export default function ClassificacaoPage() {

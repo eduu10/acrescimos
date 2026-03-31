@@ -1,0 +1,62 @@
+name: "Fase 1 - SEO/GEO e Seguranca"
+description: "Pipeline para implementar todos os itens da Fase 1 do PRD do Acrescimos"
+version: "1.0.0"
+
+steps:
+  - id: checkpoint-prioridades
+    file: checkpoint-prioridades
+    type: checkpoint
+
+  - id: impl-sitemap
+    file: impl-sitemap
+    agent: seo-engineer
+    execution: inline
+
+  - id: impl-robots
+    file: impl-robots
+    agent: seo-engineer
+    execution: inline
+
+  - id: impl-jsonld
+    file: impl-jsonld
+    agent: seo-engineer
+    execution: inline
+
+  - id: impl-canonical
+    file: impl-canonical
+    agent: seo-engineer
+    execution: inline
+
+  - id: impl-metatags
+    file: impl-metatags
+    agent: seo-engineer
+    execution: inline
+
+  - id: impl-faq-schema
+    file: impl-faq-schema
+    agent: geo-engineer
+    execution: inline
+
+  - id: impl-semantic-html
+    file: impl-semantic-html
+    agent: geo-engineer
+    execution: inline
+
+  - id: impl-bcrypt
+    file: impl-bcrypt
+    agent: security-engineer
+    execution: inline
+
+  - id: impl-rate-limit
+    file: impl-rate-limit
+    agent: security-engineer
+    execution: inline
+
+  - id: impl-csrf
+    file: impl-csrf
+    agent: security-engineer
+    execution: inline
+
+  - id: checkpoint-revisao
+    file: checkpoint-revisao
+    type: checkpoint
