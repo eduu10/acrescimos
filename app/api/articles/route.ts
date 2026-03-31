@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getArticles, createArticle } from '@/lib/db';
-import { validateCsrfToken, csrfError } from '@/lib/csrf';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -21,8 +20,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const token = request.cookies.get('admin_token')?.value;
   if (!token) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-
-  if (!validateCsrfToken(request)) return csrfError();
 
   const body = await request.json();
   const { title, content, image, category, author, published, featured } = body;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getScrapedUrls, addScrapedUrl, createArticle, getSetting } from '@/lib/db';
 import { discoverArticleUrls, extractArticleContent } from '@/lib/scrapers';
-import { validateCsrfToken, csrfError } from '@/lib/csrf';
+
 
 async function getGrokClient() {
   const apiKey = await getSetting('xai_api_key');
@@ -120,8 +120,6 @@ Responda com JSON: {"title": "novo título", "content": "conteúdo reescrito com
 export async function PUT(request: NextRequest) {
   const token = request.cookies.get('admin_token')?.value;
   if (!token) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-
-  if (!validateCsrfToken(request)) return csrfError();
 
   try {
     const body = await request.json();

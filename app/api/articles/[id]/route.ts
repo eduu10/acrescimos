@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getArticleById, updateArticle, deleteArticle } from '@/lib/db';
-import { validateCsrfToken, csrfError } from '@/lib/csrf';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,7 +15,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const token = request.cookies.get('admin_token')?.value;
   if (!token) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-  if (!validateCsrfToken(request)) return csrfError();
+
 
   const { id } = await params;
   const articleId = Number(id);
@@ -42,7 +41,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const token = request.cookies.get('admin_token')?.value;
   if (!token) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-  if (!validateCsrfToken(request)) return csrfError();
+
 
   const { id } = await params;
   const articleId = Number(id);

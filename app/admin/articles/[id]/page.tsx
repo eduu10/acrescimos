@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Search, X, ImageIcon, Upload, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { compressImage } from '@/lib/image-compress';
 
 const CATEGORIES = ['Brasileirão', 'Futebol Internacional', 'Copa do Brasil', 'Libertadores', 'Basquete', 'Fórmula 1', 'Tênis', 'Vôlei', 'Mercado da Bola', 'Opinião', 'Geral'];
 
@@ -57,9 +58,12 @@ export default function EditArticlePage() {
     if (!file) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const compressed = await compressImage(file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageData: compressed, fileName: file.name }),
+      });
       const data = await res.json();
       if (res.ok && data.url) {
         setForm(f => ({ ...f, image: data.url }));
