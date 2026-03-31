@@ -8,7 +8,7 @@ import { compressImage } from '@/lib/image-compress';
 import { RichEditor } from '@/components/admin/rich-editor';
 import { TagSelector } from '@/components/admin/tag-selector';
 
-const CATEGORIES = ['Brasileirão', 'Futebol Internacional', 'Copa do Brasil', 'Libertadores', 'Basquete', 'Fórmula 1', 'Tênis', 'Vôlei', 'Mercado da Bola', 'Opinião', 'Geral'];
+const CATEGORIES = ['Brasileirão', 'Campeonato Mineiro', 'Série B', 'Copa do Brasil', 'Libertadores', 'Futebol Internacional', 'Seleção Brasileira', 'Copa do Mundo', 'Futebol Feminino', 'Mercado da Bola', 'Basquete', 'Fórmula 1', 'Tênis', 'Vôlei', 'Opinião', 'Geral'];
 
 export default function EditArticlePage() {
   const router = useRouter();

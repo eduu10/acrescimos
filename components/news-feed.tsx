@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Clock, User, Loader2 } from 'lucide-react';
+import { Clock, User } from 'lucide-react';
 
 interface Article {
   id: number;
@@ -18,12 +18,23 @@ interface Article {
 
 const PAGE_SIZE = 6;
 
+function ArticleSkeleton() {
+  return (
+    <div className="flex flex-col gap-3 animate-pulse">
+      <div className="aspect-[4/3] rounded-lg bg-gray-200 dark:bg-gray-700" />
+      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+    </div>
+  );
+}
+
 export function NewsFeed() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`/api/articles?published=true&limit=${PAGE_SIZE}&offset=0&count=true`)
@@ -37,19 +48,40 @@ export function NewsFeed() {
   }, []);
 
   const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
       const res = await fetch(`/api/articles?published=true&limit=${PAGE_SIZE}&offset=${offset}&count=true`);
       const data: { articles: Article[]; total: number } = await res.json();
-      const newArticles = [...articles, ...data.articles];
-      setArticles(newArticles);
-      setHasMore(newArticles.length < data.total);
+      setArticles(prev => {
+        const newList = [...prev, ...data.articles];
+        setHasMore(newList.length < data.total);
+        return newList;
+      });
       setOffset(prev => prev + PAGE_SIZE);
     } catch {
       // silently fail
     }
     setLoadingMore(false);
-  }, [offset, articles]);
+  }, [offset, loadingMore, hasMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loadMore]);
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -71,13 +103,7 @@ export function NewsFeed() {
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="flex flex-col gap-3 animate-pulse">
-              <div className="aspect-[4/3] rounded-lg bg-gray-200 dark:bg-gray-700" />
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-            </div>
-          ))}
+          {[1, 2, 3, 4].map(i => <ArticleSkeleton key={i} />)}
         </div>
       ) : articles.length === 0 ? (
         <p className="text-gray-400 text-sm text-center py-8">
@@ -117,24 +143,16 @@ export function NewsFeed() {
             ))}
           </div>
 
-          {hasMore && (
-            <div className="flex justify-center">
-              <button
-                onClick={loadMore}
-                disabled={loadingMore}
-                className="px-8 py-3 bg-[#1B2436] text-white font-bold text-sm uppercase tracking-wider rounded-lg hover:bg-[#F2E205] hover:text-[#1B2436] transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {loadingMore ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Carregando...
-                  </>
-                ) : (
-                  'Carregar mais notícias'
-                )}
-              </button>
+          {/* Skeleton loading during infinite scroll */}
+          {loadingMore && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <ArticleSkeleton />
+              <ArticleSkeleton />
             </div>
           )}
+
+          {/* Intersection observer sentinel */}
+          <div ref={sentinelRef} className="h-4" aria-hidden="true" />
         </>
       )}
     </div>

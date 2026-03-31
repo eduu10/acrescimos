@@ -1,39 +1,30 @@
 import { Header } from '@/components/header'
 import { Pagination } from '@/components/pagination'
 import { getArticlesByCategory } from '@/lib/db'
-
-export const revalidate = 120 // ISR: revalidate every 2 minutes
+import { CATEGORIES, getCategoryBySlug } from '@/lib/categories'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 
-const CATEGORIES: Record<string, string> = {
-  'brasileirao': 'Brasileirão',
-  'futebol-internacional': 'Futebol Internacional',
-  'copa-do-brasil': 'Copa do Brasil',
-  'libertadores': 'Libertadores',
-  'basquete': 'Basquete',
-  'formula-1': 'Fórmula 1',
-  'tenis': 'Tênis',
-  'volei': 'Vôlei',
-  'mercado-da-bola': 'Mercado da Bola',
-  'opiniao': 'Opinião',
-  'geral': 'Geral',
+export const revalidate = 120
+
+export function generateStaticParams() {
+  return CATEGORIES.map(c => ({ slug: c.slug }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const categoryName = CATEGORIES[slug]
-  if (!categoryName) return { title: 'Categoria não encontrada' }
+  const category = getCategoryBySlug(slug)
+  if (!category) return { title: 'Categoria não encontrada' }
 
   return {
-    title: categoryName,
-    description: `Últimas notícias de ${categoryName} no Acréscimos. Cobertura completa e atualizada.`,
+    title: `${category.name} — Notícias`,
+    description: category.description,
     alternates: { canonical: `https://acrescimos.com.br/categoria/${slug}` },
     openGraph: {
-      title: `${categoryName} - Acréscimos`,
-      description: `Últimas notícias de ${categoryName}`,
+      title: `${category.name} - Acréscimos`,
+      description: category.description,
       url: `https://acrescimos.com.br/categoria/${slug}`,
       type: 'website',
       locale: 'pt_BR',
@@ -51,13 +42,13 @@ export default async function CategoryPage({
 }) {
   const { slug } = await params
   const { page: pageStr } = await searchParams
-  const categoryName = CATEGORIES[slug]
+  const category = getCategoryBySlug(slug)
 
-  if (!categoryName) notFound()
+  if (!category) notFound()
 
   const page = Math.max(1, parseInt(pageStr || '1', 10))
   const limit = 12
-  const { articles, total } = await getArticlesByCategory(categoryName, page, limit)
+  const { articles, total } = await getArticlesByCategory(category.name, page, limit)
   const totalPages = Math.ceil(total / limit)
 
   return (
@@ -68,14 +59,17 @@ export default async function CategoryPage({
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" className="mb-6">
           <ol className="flex items-center gap-2 text-sm text-gray-500">
-            <li><Link href="/" className="hover:text-[#1B2436]">Home</Link></li>
+            <li><Link href="/" className="hover:text-[#1B2436] dark:hover:text-white">Home</Link></li>
             <li aria-hidden="true">/</li>
-            <li className="text-gray-900 dark:text-white font-medium">{categoryName}</li>
+            <li className="text-gray-900 dark:text-white font-medium">{category.name}</li>
           </ol>
         </nav>
 
-        <h1 className="text-3xl font-oswald font-bold text-[#1B2436] dark:text-white mb-2">{categoryName}</h1>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">{total} {total === 1 ? 'artigo' : 'artigos'} encontrados</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-oswald font-bold text-[#1B2436] dark:text-white mb-2">{category.name}</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm max-w-2xl">{category.description}</p>
+          <p className="text-gray-400 text-xs mt-2">{total} {total === 1 ? 'artigo' : 'artigos'} encontrados</p>
+        </div>
 
         {articles.length === 0 ? (
           <div className="text-center py-16">
@@ -113,7 +107,7 @@ export default async function CategoryPage({
                     {article.title}
                   </h2>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                    {article.content.slice(0, 120)}...
+                    {article.content.replace(/<[^>]+>/g, '').slice(0, 120)}...
                   </p>
                   <time dateTime={article.created_at} className="mt-3 block text-xs text-gray-400">
                     {new Date(article.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}

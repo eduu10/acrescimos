@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sem conexão — Acréscimos</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Inter, sans-serif;
+      background: #1B2436;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+    .logo {
+      width: 56px; height: 56px;
+      background: #F2E205;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1.5rem; color: #1B2436;
+      margin: 0 auto 1.5rem;
+      transform: skewX(-6deg);
+    }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    p { color: #9ca3af; font-size: 0.95rem; margin-bottom: 2rem; max-width: 320px; }
+    button {
+      background: #F2E205;
+      color: #1B2436;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:hover { background: #fde047; }
+  </style>
+</head>
+<body>
+  <div class="logo">AC</div>
+  <h1>Você está offline</h1>
+  <p>Verifique sua conexão com a internet e tente novamente.</p>
+  <button onclick="window.location.reload()">Tentar novamente</button>
+</body>
+</html>

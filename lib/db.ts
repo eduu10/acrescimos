@@ -197,6 +197,30 @@ export async function searchArticles(
 ): Promise<{ articles: Article[]; total: number }> {
   const offset = (page - 1) * limit;
   const q = sql();
+
+  try {
+    // Full-text search with tsvector + ts_rank relevance ordering
+    const articles = await q`
+      SELECT *, ts_rank(search_vector, plainto_tsquery('portuguese', ${query})) AS rank
+      FROM articles
+      WHERE published = true AND search_vector @@ plainto_tsquery('portuguese', ${query})
+      ORDER BY rank DESC, created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    ` as (Article & { rank: number })[];
+
+    const countResult = await q`
+      SELECT COUNT(*) as total FROM articles
+      WHERE published = true AND search_vector @@ plainto_tsquery('portuguese', ${query})
+    `;
+
+    if (Number(countResult[0]?.total || 0) > 0) {
+      return { articles, total: Number(countResult[0].total) };
+    }
+  } catch {
+    // fall through to ILIKE
+  }
+
+  // Fallback: ILIKE (handles edge cases / column not yet populated)
   const searchQuery = `%${query}%`;
   const articles = await q`SELECT * FROM articles WHERE published = true AND (title ILIKE ${searchQuery} OR content ILIKE ${searchQuery}) ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}` as Article[];
   const countResult = await q`SELECT COUNT(*) as total FROM articles WHERE published = true AND (title ILIKE ${searchQuery} OR content ILIKE ${searchQuery})`;

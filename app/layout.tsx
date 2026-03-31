@@ -2,6 +2,7 @@ import type {Metadata, Viewport} from 'next';
 import {Inter, Oswald} from 'next/font/google';
 import {JsonLd} from '@/components/json-ld';
 import {AdSenseScript} from '@/components/adsense';
+import {SWRegister} from '@/components/sw-register';
 import {Analytics} from '@vercel/analytics/next';
 import {SpeedInsights} from '@vercel/speed-insights/next';
 import './globals.css';
@@ -74,6 +75,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           }}
         />
         <AdSenseScript />
+        <SWRegister />
         {children}
         <Analytics />
         <SpeedInsights />

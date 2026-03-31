@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         {
           role: 'user',
           content: `Reescreva o artigo abaixo com título e conteúdo 100% originais em português brasileiro.
-Classifique em UMA categoria: Brasileirão, Futebol Internacional, Copa do Brasil, Libertadores, Basquete, Fórmula 1, Tênis, Vôlei, Mercado da Bola, Opinião, Geral
+Classifique em UMA categoria: Brasileirão, Campeonato Mineiro, Série B, Copa do Brasil, Libertadores, Futebol Internacional, Seleção Brasileira, Copa do Mundo, Futebol Feminino, Mercado da Bola, Basquete, Fórmula 1, Tênis, Vôlei, Opinião, Geral
 
 TÍTULO: ${article.title}
 

@@ -8,6 +8,7 @@ import { ExternalNewsFeed } from '@/components/external-news-feed';
 import { MatchCountdown } from '@/components/match-countdown';
 import { TodayMatches } from '@/components/today-matches';
 import { NewsletterForm } from '@/components/newsletter-form';
+import { AdSenseAd } from '@/components/adsense';
 import { Video } from 'lucide-react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -73,6 +74,9 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Ad banner between feed and external news */}
+              <AdSenseAd slot="1122334455" format="horizontal" className="min-h-[90px] flex items-center justify-center" />
+
               {/* External News Feed */}
               <ExternalNewsFeed />
 
@@ -108,10 +112,8 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Ad Placeholder */}
-              <div className="bg-gray-200 dark:bg-gray-700 rounded-xl h-64 flex items-center justify-center text-gray-400 text-sm font-medium uppercase tracking-widest">
-                Publicidade
-              </div>
+              {/* Ad sidebar */}
+              <AdSenseAd slot="9876543210" format="rectangle" className="min-h-[250px] flex items-center justify-center" />
             </aside>
 
           </div>
