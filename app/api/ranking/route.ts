@@ -6,24 +6,15 @@ const sql = neon(process.env.DATABASE_URL!);
 export const revalidate = 0;
 
 export async function GET() {
-  // Build ranking from article view counts + engagement (comments + shares)
+  // Build ranking from article view counts
   const rows = await sql`
     SELECT
-      a.id,
-      a.title,
-      a.slug,
-      a.image,
-      a.category,
-      a.author,
-      a.created_at,
-      COALESCE(a.views, 0) AS views,
-      COUNT(DISTINCT c.id) AS comment_count
-    FROM articles a
-    LEFT JOIN comments c ON c.article_id = a.id AND c.approved = true
-    WHERE a.published = true
-      AND a.created_at >= NOW() - INTERVAL '7 days'
-    GROUP BY a.id
-    ORDER BY (COALESCE(a.views, 0) + COUNT(DISTINCT c.id) * 5) DESC
+      id, title, slug, image, category, author, created_at,
+      COALESCE(views, 0) AS views
+    FROM articles
+    WHERE published = true
+      AND created_at >= NOW() - INTERVAL '7 days'
+    ORDER BY COALESCE(views, 0) DESC
     LIMIT 10
   `;
 
@@ -37,8 +28,8 @@ export async function GET() {
     author: row.author,
     created_at: row.created_at,
     views: Number(row.views),
-    comment_count: Number(row.comment_count),
-    score: Number(row.views) + Number(row.comment_count) * 5,
+    comment_count: 0,
+    score: Number(row.views),
   }));
 
   return NextResponse.json(ranking);

@@ -28,40 +28,42 @@ interface RankedArticle {
 }
 
 async function getRanking(): Promise<RankedArticle[]> {
-  const sql = neon(process.env.DATABASE_URL!);
-  const rows = await sql`
-    SELECT
-      a.id,
-      a.title,
-      a.slug,
-      a.image,
-      a.category,
-      a.author,
-      a.created_at,
-      COALESCE(a.views, 0) AS views,
-      COUNT(DISTINCT c.id) AS comment_count
-    FROM articles a
-    LEFT JOIN comments c ON c.article_id = a.id AND c.approved = true
-    WHERE a.published = true
-      AND a.created_at >= NOW() - INTERVAL '7 days'
-    GROUP BY a.id
-    ORDER BY (COALESCE(a.views, 0) + COUNT(DISTINCT c.id) * 5) DESC
-    LIMIT 10
-  `;
+  try {
+    const sql = neon(process.env.DATABASE_URL!);
+    const rows = await sql`
+      SELECT
+        a.id,
+        a.title,
+        a.slug,
+        a.image,
+        a.category,
+        a.author,
+        a.created_at,
+        COALESCE(a.views, 0) AS views,
+        0 AS comment_count
+      FROM articles a
+      WHERE a.published = true
+        AND a.created_at >= NOW() - INTERVAL '7 days'
+      ORDER BY COALESCE(a.views, 0) DESC
+      LIMIT 10
+    `;
 
-  return rows.map((row, i) => ({
-    position: i + 1,
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    image: row.image,
-    category: row.category,
-    author: row.author,
-    created_at: row.created_at,
-    views: Number(row.views),
-    comment_count: Number(row.comment_count),
-    score: Number(row.views) + Number(row.comment_count) * 5,
-  }));
+    return rows.map((row, i) => ({
+      position: i + 1,
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      image: row.image,
+      category: row.category,
+      author: row.author,
+      created_at: row.created_at,
+      views: Number(row.views),
+      comment_count: Number(row.comment_count),
+      score: Number(row.views),
+    }));
+  } catch {
+    return [];
+  }
 }
 
 const MEDAL_COLORS = ['#F2E205', '#C0C0C0', '#CD7F32'];
