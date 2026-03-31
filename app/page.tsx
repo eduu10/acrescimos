@@ -7,6 +7,7 @@ import { LiveScoreTicker } from '@/components/live-score-ticker';
 import { ExternalNewsFeed } from '@/components/external-news-feed';
 import { MatchCountdown } from '@/components/match-countdown';
 import { TodayMatches } from '@/components/today-matches';
+import { NewsletterForm } from '@/components/newsletter-form';
 import { Video } from 'lucide-react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -116,6 +117,8 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      <NewsletterForm />
 
       <footer className="bg-[#1B2436] text-white pt-12 pb-6 border-t-4 border-[#F2E205]">
         <div className="container mx-auto px-4">

@@ -1,5 +1,7 @@
 import { getArticles } from '@/lib/db'
 
+export const revalidate = 3600 // ISR: revalidate every hour
+
 function escapeXml(text: string): string {
   return text
     .replace(/&/g, '&amp;')

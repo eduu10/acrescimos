@@ -1,0 +1,3 @@
+id,displayName,icon,role,path
+performance-engineer,Performance Engineer,⚡,Especialista em performance web e caching,./agents/performance-engineer.agent.md
+fullstack-engineer,Fullstack Engineer,🔧,Especialista fullstack Next.js com foco em engajamento,./agents/fullstack-engineer.agent.md

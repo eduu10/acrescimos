@@ -10,7 +10,7 @@ import { ArticleTracker } from './tracker';
 import { ArticleSidebar } from './sidebar';
 import type { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // ISR: revalidate every 5 minutes
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

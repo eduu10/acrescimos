@@ -1,0 +1,35 @@
+name: "Fase 3 - Engajamento e Performance"
+description: "Pipeline para implementar todos os itens da Fase 3 do PRD"
+version: "1.0.0"
+
+steps:
+  - id: checkpoint-prioridades
+    file: checkpoint-prioridades
+    type: checkpoint
+  - id: impl-pagination-home
+    file: impl-pagination-home
+    agent: performance-engineer
+    execution: inline
+  - id: impl-isr-cache
+    file: impl-isr-cache
+    agent: performance-engineer
+    execution: inline
+  - id: impl-newsletter
+    file: impl-newsletter
+    agent: fullstack-engineer
+    execution: inline
+  - id: impl-404
+    file: impl-404
+    agent: fullstack-engineer
+    execution: inline
+  - id: impl-pwa
+    file: impl-pwa
+    agent: fullstack-engineer
+    execution: inline
+  - id: impl-analytics
+    file: impl-analytics
+    agent: fullstack-engineer
+    execution: inline
+  - id: checkpoint-revisao
+    file: checkpoint-revisao
+    type: checkpoint

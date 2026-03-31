@@ -219,6 +219,21 @@ export async function getArticlesByTag(tagSlug: string, page: number = 1, limit:
   return { articles, total: Number(countResult[0]?.total || 0) };
 }
 
+// Newsletter
+export async function subscribeNewsletter(email: string): Promise<{ success: boolean; message: string }> {
+  try {
+    await sql()`INSERT INTO newsletter_subscribers (email) VALUES (${email})`;
+    return { success: true, message: 'Inscrito com sucesso!' };
+  } catch {
+    return { success: false, message: 'Este email já está inscrito.' };
+  }
+}
+
+export async function getSubscriberCount(): Promise<number> {
+  const rows = await sql()`SELECT COUNT(*) as total FROM newsletter_subscribers`;
+  return Number(rows[0]?.total || 0);
+}
+
 // Scraped URLs tracking
 export async function getScrapedUrls(): Promise<string[]> {
   const value = await getSetting('scraped_urls');

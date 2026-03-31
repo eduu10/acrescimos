@@ -1,6 +1,8 @@
 import { Header } from '@/components/header'
 import { Pagination } from '@/components/pagination'
 import { getArticlesByCategory } from '@/lib/db'
+
+export const revalidate = 120 // ISR: revalidate every 2 minutes
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
