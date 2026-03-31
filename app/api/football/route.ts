@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
 
   try {
     let url = '';
+    const fixtureId = searchParams.get('fixture');
     if (type === 'live') {
       url = `${BASE_URL}/fixtures?live=all`;
     } else if (type === 'today') {
@@ -22,6 +23,10 @@ export async function GET(request: NextRequest) {
       url = `${BASE_URL}/fixtures?date=${today}`;
     } else if (type === 'standings' && league) {
       url = `${BASE_URL}/standings?league=${league}&season=${season}`;
+    } else if (type === 'events' && fixtureId) {
+      url = `${BASE_URL}/fixtures/events?fixture=${fixtureId}`;
+    } else if (type === 'fixture' && fixtureId) {
+      url = `${BASE_URL}/fixtures?id=${fixtureId}`;
     }
 
     const res = await fetch(url, {

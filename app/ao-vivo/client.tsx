@@ -136,7 +136,7 @@ function FixtureCard({ fixture: f, isLive }: { fixture: Fixture; isLive: boolean
   const hasScore = f.goals.home !== null && f.goals.away !== null;
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl border ${isLive ? 'border-red-200 dark:border-red-800 shadow-md' : 'border-gray-100 dark:border-gray-700'} p-4`}>
+    <Link href={`/ao-vivo/${f.fixture.id}`} className={`bg-white dark:bg-gray-800 rounded-xl border ${isLive ? 'border-red-200 dark:border-red-800 shadow-md' : 'border-gray-100 dark:border-gray-700'} p-4 hover:shadow-lg transition-shadow block`}>
       {/* League */}
       <div className="flex items-center gap-2 mb-3">
         {f.league.logo && (
@@ -166,7 +166,7 @@ function FixtureCard({ fixture: f, isLive }: { fixture: Fixture; isLive: boolean
         </div>
         <TeamRow name={f.teams.away.name} logo={f.teams.away.logo} right />
       </div>
-    </div>
+    </Link>
   );
 }
 

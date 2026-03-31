@@ -27,11 +27,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     alternates: {
       canonical: articleUrl,
     },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { 'max-image-preview': 'large', 'max-snippet': -1 },
+    },
     openGraph: {
       title: article.title,
       description,
       url: articleUrl,
-      images: article.image ? [{ url: article.image, alt: article.title }] : [],
+      images: article.image
+        ? [{ url: article.image, alt: article.title, width: 1200, height: 630 }]
+        : [],
       type: 'article',
       locale: 'pt_BR',
       siteName: 'Acréscimos',
@@ -87,7 +94,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           '@context': 'https://schema.org',
           '@type': 'NewsArticle',
           headline: article.title,
-          image: article.image || undefined,
+          image: article.image
+            ? [{ '@type': 'ImageObject', url: article.image, width: 1200, height: 630 }]
+            : undefined,
           datePublished: article.created_at,
           dateModified: article.updated_at,
           author: { '@type': 'Person', name: article.author },
