@@ -105,16 +105,16 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Grok / xAI <span className="text-xs text-gray-400">(Reescrita de artigos com IA)</span>
+                Groq <span className="text-xs text-gray-400">(Reescrita de artigos com IA — gratuito)</span>
               </label>
               <input
                 type="password"
-                value={settings.xai_api_key || ''}
-                onChange={e => setSettings(s => ({ ...s, xai_api_key: e.target.value }))}
-                placeholder="xai-..."
+                value={settings.groq_api_key || ''}
+                onChange={e => setSettings(s => ({ ...s, groq_api_key: e.target.value }))}
+                placeholder="gsk_..."
                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#F2E205] focus:border-transparent font-mono"
               />
-              <p className="text-xs text-gray-400 mt-1">Obtenha em <a href="https://console.x.ai" target="_blank" rel="noopener noreferrer" className="underline">console.x.ai</a></p>
+              <p className="text-xs text-gray-400 mt-1">Obtenha grátis em <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="underline">console.groq.com</a></p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

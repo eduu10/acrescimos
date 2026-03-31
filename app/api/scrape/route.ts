@@ -4,12 +4,12 @@ import { getScrapedUrls, addScrapedUrl, createArticle, getSetting } from '@/lib/
 import { discoverArticleUrls, extractArticleContent } from '@/lib/scrapers';
 
 
-async function getGrokClient() {
-  const apiKey = await getSetting('xai_api_key');
+async function getGroqClient() {
+  const apiKey = await getSetting('groq_api_key');
   if (!apiKey) return null;
   return new OpenAI({
     apiKey,
-    baseURL: 'https://api.x.ai/v1',
+    baseURL: 'https://api.groq.com/openai/v1',
   });
 }
 
@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
   if (!token) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
   try {
-    const grok = await getGrokClient();
+    const grok = await getGroqClient();
     if (!grok) {
-      return NextResponse.json({ error: 'Chave da API Grok não configurada. Vá em Configurações para adicionar.' }, { status: 400 });
+      return NextResponse.json({ error: 'Chave da API Groq não configurada. Vá em Configurações para adicionar.' }, { status: 400 });
     }
 
     // Accept source parameter (ge, espn, uol, all)
@@ -48,9 +48,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não foi possível extrair o conteúdo do artigo.' }, { status: 422 });
     }
 
-    // Rewrite with Grok AI
+    // Rewrite with Groq AI
     const completion = await grok.chat.completions.create({
-      model: 'grok-3-mini',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         {
           role: 'system',

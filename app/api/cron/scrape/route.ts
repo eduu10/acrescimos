@@ -17,13 +17,13 @@ export async function GET(request: NextRequest) {
   const results: { title: string; source: string; status: string }[] = []
 
   try {
-    // Check Grok API key
-    const apiKey = await getSetting('xai_api_key')
+    // Check Groq API key
+    const apiKey = await getSetting('groq_api_key')
     if (!apiKey) {
-      return NextResponse.json({ error: 'Grok API key not configured' }, { status: 400 })
+      return NextResponse.json({ error: 'Groq API key not configured' }, { status: 400 })
     }
 
-    const grok = new OpenAI({ apiKey, baseURL: 'https://api.x.ai/v1' })
+    const grok = new OpenAI({ apiKey, baseURL: 'https://api.groq.com/openai/v1' })
     const pexelsKey = await getSetting('pexels_api_key')
 
     // Discover URLs from all sources
@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
           continue
         }
 
-        // Rewrite with Grok AI
+        // Rewrite with Groq AI
         const completion = await grok.chat.completions.create({
-          model: 'grok-3-mini',
+          model: 'llama-3.3-70b-versatile',
           messages: [
             {
               role: 'system',

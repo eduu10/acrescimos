@@ -7,12 +7,12 @@ export async function POST(request: NextRequest) {
   if (!token) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   try {
-    const apiKey = await getSetting('xai_api_key')
+    const apiKey = await getSetting('groq_api_key')
     if (!apiKey) {
-      return NextResponse.json({ error: 'Chave da API Grok não configurada.' }, { status: 400 })
+      return NextResponse.json({ error: 'Chave da API Groq não configurada.' }, { status: 400 })
     }
 
-    const grok = new OpenAI({ apiKey, baseURL: 'https://api.x.ai/v1' })
+    const grok = new OpenAI({ apiKey, baseURL: 'https://api.groq.com/openai/v1' })
     const body = await request.json()
     const { type } = body
 
@@ -59,7 +59,7 @@ Responda com JSON: {"title": "título do artigo", "content": "conteúdo com par�
     }
 
     const completion = await grok.chat.completions.create({
-      model: 'grok-3-mini',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         {
           role: 'system',

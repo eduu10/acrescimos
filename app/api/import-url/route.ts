@@ -3,10 +3,10 @@ import OpenAI from 'openai';
 import { getSetting } from '@/lib/db';
 import { extractArticleContent } from '@/lib/scrapers';
 
-async function getGrokClient() {
-  const apiKey = await getSetting('xai_api_key');
+async function getGroqClient() {
+  const apiKey = await getSetting('groq_api_key');
   if (!apiKey) return null;
-  return new OpenAI({ apiKey, baseURL: 'https://api.x.ai/v1' });
+  return new OpenAI({ apiKey, baseURL: 'https://api.groq.com/openai/v1' });
 }
 
 export async function POST(request: NextRequest) {
@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Rewrite with Grok AI
-  const grok = await getGrokClient();
+  // Rewrite with Groq AI
+  const grok = await getGroqClient();
   if (!grok) {
     // Return original without rewrite
     return NextResponse.json({
@@ -53,13 +53,13 @@ export async function POST(request: NextRequest) {
       image: article.image,
       source: article.source,
       rewritten: false,
-      warning: 'Chave da API Grok não configurada — conteúdo original importado sem reescrita.',
+      warning: 'Chave da API Groq não configurada — conteúdo original importado sem reescrita.',
     });
   }
 
   try {
     const completion = await grok.chat.completions.create({
-      model: 'grok-3-mini',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         {
           role: 'system',
