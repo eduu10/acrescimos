@@ -58,31 +58,50 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const contentSnippet = article.content.slice(0, 6000);
     const completion = await grok.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
         {
           role: 'system',
-          content: 'Você é um jornalista esportivo brasileiro experiente. Reescreva artigos com palavras e estrutura completamente diferentes, mantendo as informações factuais. Responda SOMENTE com JSON válido, sem markdown.',
+          content: `Você é um jornalista esportivo brasileiro sênior especializado em SEO e GEO (Generative Engine Optimization).
+Escreva artigos longos, completos e 100% originais em português brasileiro.
+Responda SOMENTE com JSON válido, sem markdown, sem blocos de código.`,
         },
         {
           role: 'user',
-          content: `Reescreva o artigo abaixo com título e conteúdo 100% originais em português brasileiro.
+          content: `Com base na notícia abaixo, escreva um artigo jornalístico esportivo COMPLETO e ORIGINAL com MÍNIMO de 3000 palavras.
+
+REGRAS DE SEO e GEO:
+- Título principal com a palavra-chave principal no início (máx. 65 caracteres)
+- Subtítulo (meta_description) atraente de 150-160 caracteres com a palavra-chave
+- Estruture o conteúdo com subtítulos H2 e H3 (use ## para H2 e ### para H3)
+- Parágrafo de introdução forte nos primeiros 100 palavras com a palavra-chave principal
+- Desenvolva CADA ponto com pelo menos 2-3 parágrafos de profundidade
+- Inclua contexto histórico, estatísticas relevantes e análise de impacto
+- Use linguagem direta, clara e envolvente — como um texto que a IA (Gemini, ChatGPT, Perplexity) citaria
+- Adicione uma seção "O que você precisa saber" com bullet points no meio do artigo
+- Termine com uma conclusão sólida e perspectivas futuras
+- Tom: jornalístico profissional, apaixonado pelo esporte
+
+NOTÍCIA DE REFERÊNCIA:
+Título: ${article.title}
+Conteúdo: ${contentSnippet}
+URL: ${article.url || ''}
+
 Classifique em UMA categoria: Brasileirão, Campeonato Mineiro, Série B, Copa do Brasil, Libertadores, Futebol Internacional, Seleção Brasileira, Copa do Mundo, Futebol Feminino, Mercado da Bola, Basquete, Fórmula 1, Tênis, Vôlei, Opinião, Geral
 
-TÍTULO: ${article.title}
-
-CONTEÚDO: ${article.content.slice(0, 3000)}
-
-Responda com JSON: {"title": "novo título", "content": "conteúdo reescrito com parágrafos separados por \\n\\n", "category": "categoria"}`,
+Responda com JSON:
+{"title": "título otimizado", "meta_description": "descrição de 150-160 chars", "content": "artigo completo com ## subtítulos e parágrafos separados por \\n\\n", "category": "categoria"}`,
         },
       ],
+      max_tokens: 8000,
     });
 
     let text = completion.choices[0]?.message?.content || '';
     text = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
 
-    let rewritten: { title: string; content: string; category: string };
+    let rewritten: { title: string; content: string; category: string; meta_description?: string };
     try {
       rewritten = JSON.parse(text);
     } catch {
@@ -100,6 +119,7 @@ Responda com JSON: {"title": "novo título", "content": "conteúdo reescrito com
     return NextResponse.json({
       title: rewritten.title || article.title,
       content: rewritten.content || article.content,
+      meta_description: rewritten.meta_description || '',
       image: article.image,
       category: rewritten.category || 'Geral',
       source: article.source,

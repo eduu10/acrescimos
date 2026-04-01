@@ -36,17 +36,41 @@ function extractOgMeta(html: string, property: string): string {
 function extractParagraphs(html: string, selector?: string): string {
   let pattern: RegExp
   if (selector) {
-    pattern = new RegExp(`<p[^>]*class="[^"]*${selector}[^"]*"[^>]*>(.*?)</p>`, 'gs')
+    pattern = new RegExp(`<p[^>]*class="[^"]*${selector}[^"]*"[^>]*>([\\s\\S]*?)</p>`, 'gi')
   } else {
-    pattern = /<p[^>]*>(.*?)<\/p>/gs
+    pattern = /<p[^>]*>([\s\S]*?)<\/p>/gi
   }
 
   const matches = [...html.matchAll(pattern)]
   return matches
-    .map((m) => m[1].replace(/<[^>]+>/g, '').trim())
-    .filter((t) => t.length > 50)
-    .slice(0, 15)
+    .map((m) => m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim())
+    .filter((t) => t.length > 40)
+    .slice(0, 60)
     .join('\n\n')
+}
+
+function extractArticleBody(html: string): string {
+  // Try common article wrapper selectors in order of specificity
+  const wrapperPatterns = [
+    /<article[^>]*>([\s\S]*?)<\/article>/i,
+    /<div[^>]*class="[^"]*(?:article-body|article__body|post-body|entry-content|content-text|materia-conteudo|story-body|newsarticle|article_body)[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<main[^>]*>([\s\S]*?)<\/main>/i,
+  ]
+
+  for (const pattern of wrapperPatterns) {
+    const match = html.match(pattern)
+    if (match) {
+      const body = match[1]
+      const paragraphs = [...body.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+        .map(m => m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim())
+        .filter(t => t.length > 40)
+        .slice(0, 60)
+        .join('\n\n')
+      if (paragraphs.length > 100) return paragraphs
+    }
+  }
+
+  return ''
 }
 
 // ── GE Globo ───────────────────────────────────────────────────────────────
@@ -169,7 +193,7 @@ export async function extractArticleContent(url: string): Promise<ScrapedArticle
 
     const image = extractOgMeta(html, 'og:image')
 
-    // Try source-specific content selectors, then generic fallback
+    // Try source-specific content selectors, then structural extraction, then generic fallback
     let content = ''
     if (url.includes('ge.globo.com')) {
       content = extractParagraphs(html, 'content-text')
@@ -178,16 +202,30 @@ export async function extractArticleContent(url: string): Promise<ScrapedArticle
     } else if (url.includes('uol.com.br')) {
       content = extractParagraphs(html, 'text')
     } else if (url.includes('lance.com.br')) {
-      content = extractParagraphs(html, 'article-body') || extractParagraphs(html)
+      content = extractParagraphs(html, 'article-body')
     } else if (url.includes('tntsports.com.br')) {
-      content = extractParagraphs(html, 'content') || extractParagraphs(html)
+      content = extractParagraphs(html, 'content')
+    } else if (url.includes('sportbuzz.com.br') || url.includes('gazetaesportiva.com')) {
+      content = extractParagraphs(html, 'entry-content') || extractParagraphs(html, 'post-content')
     }
 
-    if (!content) {
+    // Try structural extraction from <article>, <main>, etc.
+    if (!content || content.length < 200) {
+      content = extractArticleBody(html)
+    }
+
+    // Last resort: all paragraphs
+    if (!content || content.length < 200) {
       content = extractParagraphs(html)
     }
 
-    if (!title || !content) return null
+    // If we only have a title but no content, use the description as hint
+    if (!content || content.length < 100) {
+      const description = extractOgMeta(html, 'og:description')
+      if (description) content = description
+    }
+
+    if (!title) return null
 
     const source = url.includes('ge.globo.com')
       ? 'ge'
