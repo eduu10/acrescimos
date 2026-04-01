@@ -1,0 +1,34 @@
+name: "Acrescimos PRD - Fase 9"
+code: acrescimos-fase9
+description: "SEO/GEO Avancado: Structured Data JSON-LD, FAQ Schema, OpenGraph completo, HTML semantico, Breadcrumbs, Sitemap melhorado"
+version: "1.0.0"
+
+pipeline:
+  steps:
+    - id: impl-jsonld
+      agent: seo-engineer
+      execution: inline
+
+    - id: impl-faq-schema
+      agent: seo-engineer
+      execution: inline
+
+    - id: impl-opengraph
+      agent: seo-engineer
+      execution: inline
+
+    - id: impl-semantic-html
+      agent: seo-engineer
+      execution: inline
+
+    - id: impl-breadcrumbs
+      agent: seo-engineer
+      execution: inline
+
+    - id: impl-sitemap
+      agent: seo-engineer
+      execution: inline
+
+    - id: deploy
+      agent: seo-engineer
+      execution: inline

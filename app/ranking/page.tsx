@@ -7,10 +7,21 @@ import type { Metadata } from 'next';
 
 export const revalidate = 300;
 
+const rankingDescription = 'As 10 matérias mais lidas e comentadas da semana no Acréscimos — portal de notícias do futebol brasileiro.'
 export const metadata: Metadata = {
   title: 'Power Ranking — As mais lidas da semana | Acréscimos',
-  description: 'As 10 matérias mais lidas e comentadas da semana no Acréscimos.',
+  description: rankingDescription,
   alternates: { canonical: 'https://acrescimos.com.br/ranking' },
+  openGraph: {
+    title: 'Power Ranking Semanal | Acréscimos',
+    description: rankingDescription,
+    url: 'https://acrescimos.com.br/ranking',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Acréscimos',
+    images: [{ url: 'https://acrescimos.com.br/og-default.jpg', width: 1200, height: 630, alt: 'Power Ranking Acréscimos' }],
+  },
+  twitter: { card: 'summary_large_image', title: 'Power Ranking Semanal | Acréscimos', description: rankingDescription },
 };
 
 interface RankedArticle {

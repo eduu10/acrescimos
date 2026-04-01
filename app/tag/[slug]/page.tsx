@@ -11,10 +11,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const tag = await getTagBySlug(slug)
   if (!tag) return { title: 'Tag não encontrada' }
 
+  const description = `Todas as notícias e artigos sobre ${tag.name} no Acréscimos — o portal do futebol brasileiro.`
+  const url = `https://acrescimos.com.br/tag/${slug}`
   return {
-    title: tag.name,
-    description: `Artigos sobre ${tag.name} no Acréscimos.`,
-    alternates: { canonical: `https://acrescimos.com.br/tag/${slug}` },
+    title: `${tag.name} — Notícias e Artigos | Acréscimos`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${tag.name} — Notícias | Acréscimos`,
+      description,
+      url,
+      type: 'website',
+      locale: 'pt_BR',
+      siteName: 'Acréscimos',
+      images: [{ url: 'https://acrescimos.com.br/og-default.jpg', width: 1200, height: 630, alt: `Tag: ${tag.name}` }],
+    },
+    twitter: { card: 'summary_large_image', title: `${tag.name} | Acréscimos`, description },
   }
 }
 

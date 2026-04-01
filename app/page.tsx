@@ -9,6 +9,7 @@ import { MatchCountdown } from '@/components/match-countdown';
 import { TodayMatches } from '@/components/today-matches';
 import { NewsletterForm } from '@/components/newsletter-form';
 import { AdSenseAd } from '@/components/adsense';
+import { JsonLd } from '@/components/json-ld';
 import { Video } from 'lucide-react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -39,6 +40,26 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col dark:bg-gray-900">
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Acréscimos',
+        url: 'https://acrescimos.com.br',
+        logo: { '@type': 'ImageObject', url: 'https://acrescimos.com.br/icon.svg' },
+        description: 'Portal de notícias esportivas focado no futebol brasileiro, com ênfase em Minas Gerais.',
+        sameAs: [],
+      }} />
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Acréscimos',
+        url: 'https://acrescimos.com.br',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: { '@type': 'EntryPoint', urlTemplate: 'https://acrescimos.com.br/busca?q={search_term_string}' },
+          'query-input': 'required name=search_term_string',
+        },
+      }} />
       <Header />
       <LiveScoreTicker />
       <BreakingNews />

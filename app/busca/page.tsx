@@ -7,9 +7,16 @@ import type { Metadata } from 'next'
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ q?: string }> }): Promise<Metadata> {
   const { q } = await searchParams
+  const title = q ? `Busca: ${q} | Acréscimos` : 'Buscar Notícias Esportivas | Acréscimos'
+  const description = q
+    ? `Resultados de busca para "${q}" no Acréscimos — portal de notícias do futebol brasileiro.`
+    : 'Busque notícias esportivas no Acréscimos. Futebol brasileiro, Brasileirão, Copa do Brasil, Libertadores e muito mais.'
   return {
-    title: q ? `Busca: ${q}` : 'Busca',
-    description: q ? `Resultados de busca para "${q}" no Acréscimos.` : 'Busque notícias esportivas no Acréscimos.',
+    title,
+    description,
+    robots: { index: false },
+    openGraph: { title, description, url: 'https://acrescimos.com.br/busca', type: 'website', locale: 'pt_BR', siteName: 'Acréscimos' },
+    twitter: { card: 'summary', title, description },
   }
 }
 
