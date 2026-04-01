@@ -16,35 +16,56 @@ interface RichEditorProps {
 
 function markdownToHtml(text: string): string {
   if (!text) return ''
-  // Already HTML
-  if (text.trimStart().startsWith('<')) return text
+  // Already HTML — check for real block-level tags
+  if (/<(p|h[1-6]|ul|ol|blockquote|div)\b/i.test(text)) return text
 
-  return text
-    // H2 headings: ## Title
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    // H3 headings: ### Title
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    // H1 headings: # Title
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    // Bold: **text**
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // Italic: *text*
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Unordered list items: * item or - item
-    .replace(/^[\*\-] (.+)$/gm, '<li>$1</li>')
-    // Wrap consecutive <li> in <ul>
-    .replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`)
-    // Paragraphs: blank-line separated blocks
-    .split(/\n\n+/)
-    .map(block => {
-      const trimmed = block.trim()
-      if (!trimmed) return ''
-      if (/^<(h[1-6]|ul|ol|li|blockquote)/i.test(trimmed)) return trimmed
-      // Single newlines inside a block become <br>
-      return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`
-    })
-    .filter(Boolean)
-    .join('\n')
+  // Normalize line endings
+  let s = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+
+  // Ensure headings are on their own lines (## inline inside paragraph)
+  s = s.replace(/([^\n])(#{1,3} )/g, '$1\n\n$2')
+
+  // Bold: **text**
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  // Italic: *text* (not list markers)
+  s = s.replace(/(?<!\n)\*(?!\s)(.+?)(?<!\s)\*/g, '<em>$1</em>')
+
+  // Split into blocks by blank lines
+  const blocks = s.split(/\n{2,}/)
+  const html: string[] = []
+
+  for (const raw of blocks) {
+    const block = raw.trim()
+    if (!block) continue
+
+    // H3
+    if (/^### (.+)/.test(block)) {
+      html.push(`<h3>${block.replace(/^### /, '')}</h3>`)
+    // H2
+    } else if (/^## (.+)/.test(block)) {
+      html.push(`<h2>${block.replace(/^## /, '')}</h2>`)
+    // H1
+    } else if (/^# (.+)/.test(block)) {
+      html.push(`<h2>${block.replace(/^# /, '')}</h2>`)
+    // Unordered list
+    } else if (/^[\*\-] /m.test(block)) {
+      const items = block
+        .split('\n')
+        .filter(l => /^[\*\-] /.test(l.trim()))
+        .map(l => `<li>${l.replace(/^[\*\-] /, '').trim()}</li>`)
+        .join('')
+      html.push(`<ul>${items}</ul>`)
+    // Blockquote
+    } else if (/^> /.test(block)) {
+      const inner = block.replace(/^> /gm, '')
+      html.push(`<blockquote><p>${inner}</p></blockquote>`)
+    // Regular paragraph
+    } else {
+      html.push(`<p>${block.replace(/\n/g, ' ')}</p>`)
+    }
+  }
+
+  return html.join('\n')
 }
 
 export function RichEditor({ content, onChange, theme = 'light' }: RichEditorProps) {
