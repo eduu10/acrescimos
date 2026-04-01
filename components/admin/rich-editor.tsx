@@ -6,6 +6,7 @@ import ImageExtension from '@tiptap/extension-image'
 import LinkExtension from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Bold, Italic, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Quote, Minus } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
 interface RichEditorProps {
   content: string
@@ -13,8 +14,42 @@ interface RichEditorProps {
   theme?: 'light' | 'dark'
 }
 
+function markdownToHtml(text: string): string {
+  if (!text) return ''
+  // Already HTML
+  if (text.trimStart().startsWith('<')) return text
+
+  return text
+    // H2 headings: ## Title
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    // H3 headings: ### Title
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    // H1 headings: # Title
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // Bold: **text**
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Italic: *text*
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Unordered list items: * item or - item
+    .replace(/^[\*\-] (.+)$/gm, '<li>$1</li>')
+    // Wrap consecutive <li> in <ul>
+    .replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`)
+    // Paragraphs: blank-line separated blocks
+    .split(/\n\n+/)
+    .map(block => {
+      const trimmed = block.trim()
+      if (!trimmed) return ''
+      if (/^<(h[1-6]|ul|ol|li|blockquote)/i.test(trimmed)) return trimmed
+      // Single newlines inside a block become <br>
+      return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`
+    })
+    .filter(Boolean)
+    .join('\n')
+}
+
 export function RichEditor({ content, onChange, theme = 'light' }: RichEditorProps) {
   const isDark = theme === 'dark'
+  const lastContent = useRef<string>('')
 
   const editor = useEditor({
     extensions: [
@@ -23,11 +58,24 @@ export function RichEditor({ content, onChange, theme = 'light' }: RichEditorPro
       LinkExtension.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder: 'Escreva o conteúdo do artigo...' }),
     ],
-    content: content.includes('<') ? content : content.split('\n').filter(Boolean).map(p => `<p>${p}</p>`).join(''),
+    content: markdownToHtml(content),
     onUpdate: ({ editor: e }) => {
-      onChange(e.getHTML())
+      const html = e.getHTML()
+      lastContent.current = html
+      onChange(html)
     },
   })
+
+  // Re-sync editor when content prop changes externally (e.g. after AI import)
+  useEffect(() => {
+    if (!editor) return
+    const incoming = markdownToHtml(content)
+    // Only update if it's a meaningful external change (not our own onChange emission)
+    if (incoming && incoming !== lastContent.current && incoming !== editor.getHTML()) {
+      lastContent.current = incoming
+      editor.commands.setContent(incoming, false)
+    }
+  }, [content, editor])
 
   if (!editor) return null
 
